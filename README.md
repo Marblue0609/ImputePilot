@@ -4,8 +4,7 @@ ImputePilot is a Django demo for stable imputation model selection in time serie
 It is built on top of ImputePilot/RecImpute-style components and provides an end-to-end workflow from training to recommendation and evaluation.
 
 Reference paper:
-- **ImputePilot: Stable Model Selection for Data Repair in Time Series**
-- Local file: `ImputePilot_Stable_Model_Selection_for_Data_Repair.txt`
+- [**A-DARTS: Stable Model Selection for Data Repair in Time Series**](https://exascale.info/assets/pdf/khayati2025icde.pdf)
 
 ## What It Does
 
@@ -136,5 +135,5 @@ celery -A demo worker -l info
 
 ## Attribution
 
-This demo builds on prior ImputePilot/RecImpute-related research and implementations.
+This demo builds on prior A-DARTS/RecImpute-related research and implementations.
 
