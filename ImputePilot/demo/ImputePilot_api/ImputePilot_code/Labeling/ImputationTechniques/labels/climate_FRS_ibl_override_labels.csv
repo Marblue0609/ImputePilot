@@ -1,0 +1,3 @@
+Cluster ID,Label,baseAlgo,baseRmse,externalAlgo,externalRmse,decisionSource
+0,STMVL,STMVL,0.2582396976674053,DeepMVI,0.4469318985939026,imputebench
+1,SoftImp,SoftImp,0.5002975048818766,IIM,0.7634126543998718,imputebench

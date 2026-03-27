@@ -1,0 +1,17 @@
+{
+  "timestamp_utc": "20260324T134030Z",
+  "kept_datasets": [
+    "climate_FRS",
+    "climate_PRE",
+    "my_timeseries"
+  ],
+  "kept_files": [
+    "climate_FRS.zip",
+    "climate_PRE.zip",
+    "my_timeseries.zip"
+  ],
+  "missing_keep_targets": [],
+  "moved_count": 138,
+  "remaining_count": 3,
+  "moved_to": "/home/yyy/ImputePilot_proj/ImputePilot/demo/ImputePilot_api/ImputePilot_code/Datasets/RealWorld1_prune_backups/20260324T134030Z_keep3"
+}

@@ -1,0 +1,90 @@
+# ImputePilot: A Demo System for Stable Imputation Model Selection in Time Series Data Repair
+# Zhejiang University
+
+# clustering_config.yaml
+# @author: zhexinjin@zju.edu.cn
+
+# Clustering related configuration file
+# ------------------------------------
+
+# INIT_ACCEPTANCE_THRESHOLD: if original data set has a correlation higher or equal than this, clustering is not necessary
+INIT_ACCEPTANCE_THRESHOLD: 0.90
+
+# CLUSTER_ACCEPTANCE_THRESHOLD: if cluster has a correlation higher or equal than this, recusion stops, cluster is accepted 
+CLUSTER_ACCEPTANCE_THRESHOLD: 0.85
+
+# SIMILAR_CLUSTER_THRESHOLD: correlation btw centroids must be above this to consider the two clusters similar
+SIMILAR_CLUSTER_THRESHOLD: 0.55
+
+# CENTROID_DIST_THRESHOLD: correlation btw a sequence and its current cluster's centroid must greater than this to consider moving it to another cluster
+CENTROID_DIST_THRESHOLD: 0.4
+
+# TS_PERC_TO_COMPUTE_K: use this percentage * #sequences in a data set to compute K
+TS_PERC_TO_COMPUTE_K: 0.20
+
+# MAX_ITER: max number of iterations before the algorithm can stop early.
+MAX_ITER: 500
+
+# APPLY_MERGING: whether or not the merging process should be applied after the incremental clustering is done
+APPLY_MERGING: True
+
+
+### ---- old (to delete eventually)
+
+# NCC_MIN_THRESHOLD: data sets with a mean NCC score above this threshold will not be clustered (already correlated enough)
+NCC_MIN_THRESHOLD: 0.95
+
+# GS_MAX_TESTS: used to define max number of clusters to evaluate during gridsearch based on the data set's complexity
+# if complexity of data set < *key*: then max #clusters to try = *value*
+GS_MAX_TESTS: 
+  - 50000: 20
+  - 100000: 16
+  - 150000: 13
+  - 200000: 9
+  - .inf: 6
+
+# GS_NB_RUNS: number of gridsearch runs to perform for each cluster to evaluate for a given data set and considering its complexity
+GS_NB_RUNS: 
+  - small: 6
+  - medium: 4
+  - large: 3
+
+# GS_MAX_RETRIES: maximum number of tries before skipping the evaluation of a cluster during gridsearch
+# retries occur if a generated cluster does not has at least 2 time series
+GS_MAX_RETRIES: 5
+
+# GS_OPTIONAL_RANGES_HINTS: used to define the range of clusters to evaluate during gridsearch for specified data sets
+GS_OPTIONAL_RANGES_HINTS:    
+  temp: 
+    - min: 2
+    - max: 6
+    - step: 1
+  meteo: 
+    - min: 2
+    - max: 8
+    - step: 1
+
+# GS_NB_WORKERS: number of workers to use for the clustering's gridsearch. If set to <= 0, all available cores are used.
+GS_NB_WORKERS: 2
+
+# CLUSTERING_NB_RUNS: number of runs to perform during the final clustering phase depending on the data sets complexity
+CLUSTERING_NB_RUNS:
+  - small: 50
+  - medium: 25
+  - large: 15
+
+# Minimum number of time series a cluster can contain
+MIN_NB_TS_PER_CLUSTER: 5
+
+# Maximum number of time series a cluster can contain
+MAX_NB_TS_PER_CLUSTER: 15
+
+# CLUSTERS_MERGING_THRESHOLD: min score to accept a merge (new corr / old corr)
+CLUSTERS_MERGING_THRESHOLD: 0.80
+
+# CLUSTERS_MERGING_THRESHOLD_SINGLE_TS: min score to accept a merge (new corr / old corr) if the other is a mono-cluster
+CLUSTERS_MERGING_THRESHOLD_SINGLE_TS: 0.75
+
+# TS_MOVING_THRESHOLD: min score to accept moving a sample to another cluster 
+# ( (new_other corr + new_curr corr) / (old_other corr + old_curr corr) )
+TS_MOVING_THRESHOLD: 1.15

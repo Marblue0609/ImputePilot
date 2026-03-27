@@ -1,0 +1,50 @@
+# ImputePilot: A Demo System for Stable Imputation Model Selection in Time Series Data Repair
+# Zhejiang University
+
+# modelstrainer_config.yaml
+# @author: zhexinjin@zju.edu.cn
+
+# Models training related configuration file
+# ------------------------------------
+
+# NB_CV_SPLITS: Number of cross-validation splits to perform while training
+NB_CV_SPLITS: 3
+
+# SAVE_TRAIN_SET: save the train set to disk once the training is done (the test set will always be saved)
+SAVE_TRAIN_SET: True
+
+
+# --- ModelRace parameters
+
+# NB_PIPELINES: number of pipelines to sample and feed as input to the ModelRace algorithm
+NB_PIPELINES: 250
+
+# S: partial training set sizes to use for training and evaluating the racing models
+S: [2, 7, 12, 20, 50]
+
+# SELECTION_LEN: approximate number of pipelines that should remain after the selection process is done
+SELECTION_LEN: 5
+
+# TEST_METHOD: statistical significance test method name used in ModelRace to identify significantly worse models. Value can be one 
+# of: ttest_rel, friedmanchisquare, chisquare, ztest
+TEST_METHOD: ttest_rel
+
+# P_VALUE: p_value used with the paired t-test or any other significance test to decide if a difference is significant or not
+P_VALUE: .01
+
+# ALPHA: alpha parameter in the score function of ModelRace. Weight of F1-Score. Must be between 0 and 1
+ALPHA: .50
+
+# BETA: beta parameter in the score function of ModelRace. Weight of Recall@3. Must be between 0 and 1
+BETA: .50
+
+# GAMMA: gamma parameter in the score function of ModelRace. Weight of training time. Must be between 0 and 1
+GAMMA: .50
+
+# SCORE_MARGIN: Scores acceptance margin. During selection, if a pipeline performs below MAX_SCORE - MARGIN it gets eliminated before 
+# even finishing cross-validation. Scores vary between 0 and 1.
+SCORE_MARGIN: .15
+
+# ALLOW_EARLY_ELIMINATIONS: True if early eliminations are allowed in ModelRace, False if every model should finish their cv-partial-training
+# even if early results show evidences of bad performance.
+ALLOW_EARLY_ELIMINATIONS: True

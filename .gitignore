@@ -1,0 +1,65 @@
+﻿# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Django local artifacts
+*.sqlite3
+media/
+staticfiles/
+
+# Logs
+logs/
+*.log
+nohup.out
+*.pid
+
+# Archives / backups
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.xz
+project_backups/
+_unzipped/
+_backup*/
+.backup*/
+_backup_*/
+
+# Large local benchmark/data mirrors
+bench-vldb20/
+recimpute-main/
+
+# ImputePilot runtime/generated artifacts
+ImputePilot/demo/baseline_runners/.state/
+ImputePilot/demo/catboost_info/
+ImputePilot/demo/Training/Results/
+
+ImputePilot/demo/ImputePilot_api/ImputePilot_code/Datasets/Inference/
+ImputePilot/demo/ImputePilot_api/ImputePilot_code/Datasets/Recommendations/
+ImputePilot/demo/ImputePilot_api/ImputePilot_code/Datasets/SystemInputs/
+ImputePilot/demo/ImputePilot_api/ImputePilot_code/Datasets/RealWorld/
+ImputePilot/demo/ImputePilot_api/ImputePilot_code/Datasets/RealWorld1/
+ImputePilot/demo/ImputePilot_api/ImputePilot_code/Datasets/RealWorld 1/
+ImputePilot/demo/ImputePilot_api/ImputePilot_code/Datasets/RealWorld__orig_*/
+
+# Keep vendor asset tracked
+!ImputePilot/demo/ImputePilot_api/static/ImputePilot_api/vendor/
+!ImputePilot/demo/ImputePilot_api/static/ImputePilot_api/vendor/chart.umd.min.js

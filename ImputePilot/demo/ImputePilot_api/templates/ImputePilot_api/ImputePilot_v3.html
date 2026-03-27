@@ -1,0 +1,957 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImputePilot Time Series Imputation</title>
+  <link rel="stylesheet" href="{% static 'ImputePilot_api/style.css' %}?v=20260320b">
+  <!-- Chart.js for time series visualization -->
+  <script src="{% static 'ImputePilot_api/vendor/chart.umd.min.js' %}"></script>
+</head>
+
+<body>
+  <div class="app">
+    <!-- ========== Sidebar ========== -->
+    <div class="sidebar">
+      <div class="logo">
+        <h1>ImputePilot</h1>
+        <p>Time Series Imputation</p>
+      </div>
+      <nav class="menu">
+        <div class="menu-item active" data-page="dashboard">Data Insights</div>
+        <div class="menu-item" data-page="pipeline">Model Pipelines Training</div>
+        <div class="menu-item" data-page="recommend">Online Model Recommendation</div>
+      </nav>
+    </div>
+
+    <!-- ========== Main Content ========== -->
+    <main class="main">
+
+      <!-- ========== Dashboard Page ========== -->
+      <section id="page-dashboard" class="page active">
+        <div class="card-row">
+          <div class="card">
+            <h3>Model Status</h3>
+            <div class="status-item">Last Trained: <span id="last-trained">--</span></div>
+            <div class="status-item">Winning Pipeline: <span id="winning-pipeline">--</span></div>
+            <div class="status-item">F1 Score: <span id="f1-score">--</span></div>
+          </div>
+          <div class="card">
+            <h3>Feature Dimensions</h3>
+            <div class="feature-number">808</div>
+            <div class="feature-desc">Catch 22 + TSFresh + Topological</div>
+          </div>
+        </div>
+
+        <section class="card benchmark-summary-section">
+          <h3 class="section-title">RealWorld Downstream Benchmark</h3>
+          <div class="benchmark-controls">
+            <label class="benchmark-control">
+              <span class="benchmark-control-label">Run Time</span>
+              <select id="rw-benchmark-select" class="benchmark-control-input"></select>
+            </label>
+            <label class="benchmark-control">
+              <span class="benchmark-control-label">Search Dataset</span>
+              <input
+                id="rw-dataset-search"
+                class="benchmark-control-input"
+                type="search"
+                placeholder="Type dataset name..."
+                autocomplete="off"
+              />
+            </label>
+            <label class="benchmark-control">
+              <span class="benchmark-control-label">Dataset</span>
+              <select id="rw-dataset-select" class="benchmark-control-input"></select>
+            </label>
+          </div>
+          <div class="summary-meta" id="rw-summary-meta"></div>
+          <div class="summary-charts">
+            <div class="chart-card">
+              <div class="chart-title" id="rw-forecasting-title">Forecasting RMSE by Method</div>
+              <canvas id="rw-forecasting-chart" height="180"></canvas>
+              <div id="rw-forecasting-chart-fallback" class="chart-fallback-table" style="display:none;"></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title" id="rw-classification-title">Classification Accuracy by Method</div>
+              <canvas id="rw-classification-chart" height="180"></canvas>
+              <div id="rw-classification-chart-fallback" class="chart-fallback-table" style="display:none;"></div>
+            </div>
+          </div>
+          <div class="empty-state" id="rw-summary-empty" style="display:none;">
+            Run the RealWorld benchmark to populate dataset-level charts.
+          </div>
+        </section>
+      </section>
+
+      <!-- ========== Data Pipeline Page ========== -->
+      <section id="page-pipeline" class="page">
+        <div class="page-header">
+          <h1 class="page-title">Model Pipelines Training</h1>
+          <p class="page-subtitle">Upload your dataset and train a recommendation model</p>
+        </div>
+
+        <!-- ===== Stepper ===== -->
+        <div class="card stepper-card">
+          <div class="stepper stepper-square">
+            <div class="step active" data-step="1">
+              <div class="step-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+              </div>
+              <span class="step-label">Upload Data</span>
+            </div>
+            <div class="step" data-step="2">
+              <div class="step-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="5" r="3" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <circle cx="6" cy="19" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <line x1="12" y1="12" x2="6" y2="16" />
+                  <line x1="12" y1="12" x2="18" y2="16" />
+                </svg>
+              </div>
+              <span class="step-label">Feature Extraction</span>
+            </div>
+            <div class="step" data-step="3">
+              <div class="step-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+              </div>
+              <span class="step-label">Clustering</span>
+            </div>
+            <div class="step" data-step="4">
+              <div class="step-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <ellipse cx="12" cy="5" rx="9" ry="3" />
+                  <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+                  <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+                </svg>
+              </div>
+              <span class="step-label">Labeling</span>
+            </div>
+            <div class="step" data-step="5">
+              <div class="step-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
+                  <path d="M2 20h20" />
+                </svg>
+              </div>
+              <span class="step-label">ModelRace</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Pipeline Content ===== -->
+        <div class="pipeline-content">
+          <!-- Step 1: Upload Data -->
+          <div class="step-content active" data-step="1">
+            <div class="card upload-panel">
+              <h3 class="panel-title">Uploading Training Dataset</h3>
+              <p class="panel-desc">Upload time series data. The paper uses 67K series from 107 datasets.</p>
+              <div class="upload-zone" id="pipeline-upload-zone">
+                <input type="file" id="pipeline-file-input" accept=".zip" multiple hidden>
+                <div class="upload-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                </div>
+                <p class="upload-text">Click to upload training data</p>
+                <p class="upload-hint">.zip</p>
+              </div>
+              <div class="file-list" id="pipeline-file-list"></div>
+              <button class="btn btn-primary" id="btn-pipeline-continue" disabled>Continue to feature
+                extraction</button>
+            </div>
+            <div class="card preview-panel">
+              <div class="preview-placeholder" id="pipeline-preview-placeholder">
+                <span>Upload data to begin</span>
+              </div>
+              <div class="preview-content" id="pipeline-preview-content" style="display: none;">
+                <h3 class="panel-title">Data Preview</h3>
+                <div class="preview-stats pipeline-preview-stats" id="pipeline-preview-stats"></div>
+
+                <!-- Time Series Chart -->
+                <div id="pipeline-chart-container" class="chart-container">
+                  <canvas id="pipeline-ts-chart"></canvas>
+                </div>
+                <div id="pipeline-missing-info" class="missing-info"></div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Clustering -->
+          <div class="step-content" data-step="3">
+            <div class="card param-panel" id="cluster-config-panel">
+              <h3 class="panel-title">Clustering</h3>
+              <p class="panel-desc">Shape-based clustering using cross-correlation with merge/move refinement.</p>
+              <div class="param-row cluster-param-stack">
+                <div class="param-group">
+                  <label class="param-label">Correlation Threshold (δ)</label>
+                  <input type="number" class="param-input" id="input-delta" value="0.9" step="0.01" min="0" max="1">
+                </div>
+                <div class="param-group">
+                  <label class="param-label">Split Ratio (ρ)</label>
+                  <input type="number" class="param-input" id="input-rho" value="0.20" step="0.01" min="0" max="1">
+                  <span class="param-hint">Paper default: 20%</span>
+                </div>
+              </div>
+              <button class="btn btn-primary" id="btn-run-clustering">Run Clustering</button>
+            </div>
+            <div class="card result-panel fixed-scroll-panel" id="cluster-result-panel">
+              <h3 class="panel-title">Cluster Results</h3>
+              <div class="result-placeholder" id="cluster-placeholder">
+                <span>Run clustering to see results</span>
+              </div>
+              <div class="result-list" id="cluster-results" style="display: none;"></div>
+            </div>
+          </div>
+
+          <!-- Step 4: Labeling -->
+          <div class="step-content" data-step="4">
+            <div class="card param-panel" id="labeling-config-panel">
+              <h3 class="panel-title">Labeling via ImputeBench</h3>
+              <p class="panel-desc">Benchmark algorithms on cluster representatives, propagate labels within clusters.
+              </p>
+              <label class="param-label">Algorithms to Benchmark</label>
+              <div class="checkbox-grid" id="labeling-algorithms">
+                <label class="checkbox-item"><input type="checkbox" checked value="STMVL"><span>STMVL</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="CDRec"><span>CDRec</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="SVDImp"><span>SVDImp</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="TRMF"><span>TRMF</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="TKCM"><span>TKCM</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="DynaMMo"><span>DynaMMo</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="TeNMF"><span>TeNMF</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="SVT"><span>SVT</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="GROUSE"><span>GROUSE</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="SoftImp"><span>SoftImp</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="ROSL"><span>ROSL</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="MRNN"><span>MRNN</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="BRITS"><span>BRITS</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="DeepMVI"><span>DeepMVI</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="MPIN"><span>MPIN</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="IIM"><span>IIM</span></label>
+                <label class="checkbox-item"><input type="checkbox" checked value="Pristi"><span>Pristi /
+                    Dif</span></label>
+              </div>
+              <div class="param-group" id="external-dl-toggle-group" style="margin-top: 10px;">
+                <label class="checkbox-item">
+                  <input type="checkbox" id="toggle-external-dl" checked>
+                  <span>Enable external DL runner probe</span>
+                </label>
+              </div>
+              <button class="btn btn-primary" id="btn-run-labeling">Run Labeling</button>
+            </div>
+            <div class="card result-panel fixed-scroll-panel" id="labeling-result-panel">
+              <h3 class="panel-title">Best Algorithm per Cluster</h3>
+              <div class="result-placeholder" id="labeling-placeholder">
+                <span>Run labeling to see results</span>
+              </div>
+              <div class="result-list" id="labeling-results" style="display: none;"></div>
+            </div>
+          </div>
+
+          <!-- Step 2: Feature Extraction -->
+          <div class="step-content" data-step="2">
+            <!--
+            <div class="card param-panel">
+              <h3 class="panel-title">Feature Extraction</h3>
+              <p class="panel-desc">Extract 430 statistical and topological features.</p>
+              <div class="feature-checkbox-list">
+                <label class="checkbox-item large"><input type="checkbox" checked value="canonical"><span>Canonical (45)</span></label>
+                <label class="checkbox-item large"><input type="checkbox" checked value="dependencies"><span>Dependencies (68)</span></label>
+                <label class="checkbox-item large"><input type="checkbox" checked value="trends"><span>Trends (52)</span></label>
+                <label class="checkbox-item large"><input type="checkbox" checked value="topological"><span>Topological (48)</span></label>
+              </div>
+              <button class="btn btn-primary" id="btn-run-features">Extract Features</button>
+            </div>
+            -->
+
+            <div class="card param-panel feature-config-panel" id="feature-config-panel">
+              <h3 class="panel-title">Feature Extraction</h3>
+              <p class="panel-desc">Extract 808 features using 3 extractors (Catch22 + TSFresh + Topological)</p>
+
+              <div class="extractor-info-list">
+                <div class="extractor-info-item catch22">
+                  <div class="extractor-info-header">
+                    <span class="extractor-info-dot catch22"></span>
+                    <span class="extractor-info-name">Catch22</span>
+                    <span class="extractor-info-count">22 features</span>
+                  </div>
+                  <p class="extractor-info-desc">Lightweight canonical time series features</p>
+                </div>
+                <div class="extractor-info-item tsfresh">
+                  <div class="extractor-info-header">
+                    <span class="extractor-info-dot tsfresh"></span>
+                    <span class="extractor-info-name">TSFresh</span>
+                    <span class="extractor-info-count">783 features</span>
+                  </div>
+                  <p class="extractor-info-desc">Comprehensive statistical features library</p>
+                </div>
+                <div class="extractor-info-item topological">
+                  <div class="extractor-info-header">
+                    <span class="extractor-info-dot topological"></span>
+                    <span class="extractor-info-name">Topological</span>
+                    <span class="extractor-info-count">3 features</span>
+                  </div>
+                  <p class="extractor-info-desc">Persistence diagrams from TDA</p>
+                </div>
+              </div>
+
+              <div class="extractor-total">Total: 808 features</div>
+              <button class="btn btn-primary" id="btn-run-features">Extract Features</button>
+            </div>
+
+            <!--
+            <div class="card result-panel">
+              <h3 class="panel-title">Feature Importance</h3>
+              <div class="result-placeholder" id="features-placeholder">
+                <span>Extract features to see importance</span>
+              </div>
+              <div class="feature-chart" id="feature-chart" style="display: none;">
+                <div class="bar-chart">
+                  <div class="bar-row">
+                    <span class="bar-label">Topological</span>
+                    <div class="bar-track"><div class="bar-fill" style="width: 41%;"></div></div>
+                    <span class="bar-value">41%</span>
+                  </div>
+                  <div class="bar-row">
+                    <span class="bar-label">Trends</span>
+                    <div class="bar-track"><div class="bar-fill" style="width: 23%;"></div></div>
+                    <span class="bar-value">23%</span>
+                  </div>
+                  <div class="bar-row">
+                    <span class="bar-label">Dependencies</span>
+                    <div class="bar-track"><div class="bar-fill" style="width: 14%;"></div></div>
+                    <span class="bar-value">14%</span>
+                  </div>
+                  <div class="bar-row">
+                    <span class="bar-label">Canonical</span>
+                    <div class="bar-track"><div class="bar-fill" style="width: 22%;"></div></div>
+                    <span class="bar-value">22%</span>
+                  </div>
+                </div>
+                <div class="chart-axis">
+                  <span>0%</span><span>20%</span><span>40%</span><span>60%</span><span>80%</span><span>100%</span>
+                </div>
+              </div>
+            </div>
+            -->
+            <div class="card result-panel fixed-scroll-panel" id="feature-result-panel">
+              <h3 class="panel-title">Extraction Results</h3>
+              <div class="result-placeholder" id="features-placeholder">
+                <span>Extract features to see results</span>
+              </div>
+
+              <div id="feature-results-container" style="display: none;">
+                <div class="feature-summary">
+                  <div class="feature-total">
+                    <div class="total-number" id="total-features">0</div>
+                    <div class="total-label">Feature Columns (Previewed)</div>
+                  </div>
+                  <span class="feature-summary-dataset" id="feature-summary-dataset"></span>
+                </div>
+
+                <div class="extractor-cards" id="extractor-cards"></div>
+
+                <div class="feature-preview-panel">
+                  <div class="feature-preview-header">
+                    <h4>Feature Content Preview</h4>
+                    <span class="feature-preview-dataset" id="feature-preview-dataset"></span>
+                  </div>
+                  <div class="feature-preview-tabs" id="feature-preview-tabs"></div>
+                  <div class="feature-preview-empty" id="feature-preview-empty">
+                    No feature preview available yet.
+                  </div>
+                  <div class="feature-preview-controls" id="feature-preview-controls" style="display: none;">
+                    <label for="feature-preview-dataset-select">Dataset</label>
+                    <select id="feature-preview-dataset-select"></select>
+                    <label for="feature-preview-row-select">Time Series</label>
+                    <select id="feature-preview-row-select"></select>
+                    <span class="feature-preview-note" id="feature-preview-note"></span>
+                  </div>
+                  <div class="feature-preview-chart-wrapper" id="feature-preview-chart-wrapper" style="display: none;">
+                    <canvas id="feature-preview-chart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 5: ModelRace -->
+          <div class="step-content" data-step="5">
+            <div class="card param-panel" id="modelrace-config-panel">
+              <h3 class="panel-title">ModelRace</h3>
+              <p class="panel-desc">Pipeline competition with two-phase pruning.</p>
+              <div class="param-row modelrace-param-stack">
+                <div class="param-group">
+                  <label class="param-label">α(F1 weight)</label>
+                  <input type="number" class="param-input" id="input-alpha" value="0.50" step="0.01">
+                </div>
+                <div class="param-group">
+                  <label class="param-label">β(R@3 weight)</label>
+                  <input type="number" class="param-input" id="input-beta" value="0.50" step="0.01">
+                </div>
+                <div class="param-group">
+                  <label class="param-label">γ(time penalty)</label>
+                  <input type="number" class="param-input" id="input-gamma" value="0.75" step="0.01">
+                </div>
+                <div class="param-group">
+                  <label class="param-label">Seed Pipelines</label>
+                  <input type="number" class="param-input" id="input-seed" value="100">
+                </div>
+                <div class="param-group">
+                  <label class="param-label">T-test P-value</label>
+                  <input type="number" class="param-input" id="input-pvalue" value="0.50" step="0.01">
+                </div>
+              </div>
+              <button class="btn btn-primary" id="btn-run-modelrace">Start ModelRace</button>
+            </div>
+            <div class="card result-panel fixed-scroll-panel" id="modelrace-result-panel">
+              <h3 class="panel-title">Pipeline Evolution</h3>
+              <div class="result-placeholder" id="modelrace-placeholder">
+                <span>Start ModelRace to see results</span>
+              </div>
+              <div class="result-list" id="modelrace-results" style="display: none;"></div>
+
+              <div class="result-placeholder" id="evolution-placeholder">
+                <span>Start ModelRace to see evolution</span>
+              </div>
+              <div id="pipeline-evolution-container" style="display: none;">
+                <!-- Temporarily hide the evolution bar chart to avoid page scroll -->
+                <!-- <div id="evolution-chart" class="evolution-chart"></div> -->
+
+                <div class="evolution-table-wrapper">
+                  <table class="evolution-table">
+                    <thead>
+                      <tr>
+                        <th>Round</th>
+                        <th>Candidates</th>
+                        <th>Eliminated</th>
+                        <th>Best F1</th>
+                        <th>Best Pipeline</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Console ===== -->
+        <div class="console-panel">
+          <div class="console-header">Console Output</div>
+          <div class="console-body" id="pipeline-console">
+            <div class="console-line">Waiting for commands ...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== Recommend Page ========== -->
+      <section id="page-recommend" class="page">
+        <div class="page-header">
+          <h1 class="page-title">Online Model Selection</h1>
+          <p class="page-subtitle">Upload your dataset and train a recommendation model</p>
+        </div>
+
+        <!-- ===== Stepper ===== -->
+        <div class="card stepper-card">
+          <div class="stepper stepper-circle">
+            <div class="step active" data-step="1">
+              <div class="step-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+              </div>
+              <div class="step-arrow">→</div>
+              <span class="step-label">Upload</span>
+            </div>
+            <div class="step" data-step="2">
+              <div class="step-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="4" y1="20" x2="4" y2="10" />
+                  <line x1="10" y1="20" x2="10" y2="4" />
+                  <line x1="16" y1="20" x2="16" y2="13" />
+                  <line x1="22" y1="20" x2="22" y2="7" />
+                </svg>
+              </div>
+              <div class="step-arrow">→</div>
+              <span class="step-label">Feature Extraction</span>
+            </div>
+            <div class="step" data-step="3">
+              <div class="step-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon
+                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              </div>
+              <div class="step-arrow">→</div>
+              <span class="step-label">Recommend</span>
+            </div>
+            <div class="step" data-step="4">
+              <div class="step-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+              </div>
+              <div class="step-arrow">→</div>
+              <span class="step-label">Impute & Result</span>
+            </div>
+            <div class="step" data-step="5">
+              <div class="step-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 11 12 14 22 4" />
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                </svg>
+              </div>
+              <span class="step-label">Downstream Evaluation</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Recommend Content ===== -->
+        <div class="recommend-content">
+          <!-- Step 1: Upload -->
+          <div class="step-content active" data-step="1">
+            <div class="card upload-panel">
+              <h3 class="panel-title">Upload Incomplete Time Series</h3>
+              <div class="upload-zone" id="recommend-upload-zone">
+                <input type="file" id="recommend-file-input" accept=".zip" hidden>
+                <div class="upload-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                </div>
+                <p class="upload-text">Click to upload your data</p>
+                <p class="upload-hint">.zip</p>
+              </div>
+              <button class="btn btn-primary" id="btn-recommend-continue" disabled>Continue to Feature Extraction
+                →</button>
+            </div>
+            <div class="card preview-panel">
+              <h3 class="panel-title">Uploaded Data Preview</h3>
+              <div class="preview-placeholder" id="recommend-preview-placeholder">
+                <span id="recommend-preview-placeholder-text">Upload data to see preview</span>
+              </div>
+              <div class="preview-content" id="recommend-preview-content" style="display: none;">
+                <div class="preview-stats" id="recommend-preview-stats"></div>
+
+                <div id="recommend-chart-container" class="chart-container">
+                  <canvas id="recommend-ts-chart"></canvas>
+                </div>
+                <div id="recommend-missing-info" class="missing-info"></div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Feature Extraction -->
+          <div class="step-content" data-step="2">
+            <div class="card param-panel feature-config-panel" id="recommend-feature-config-panel">
+              <h3 class="panel-title">Feature Extraction (Inference Data)</h3>
+              <p class="panel-desc">Extract 808 features using 3 extractors (Catch22 + TSFresh + Topological)</p>
+
+              <div class="extractor-info-list">
+                <div class="extractor-info-item catch22">
+                  <div class="extractor-info-header">
+                    <span class="extractor-info-dot catch22"></span>
+                    <span class="extractor-info-name">Catch22</span>
+                    <span class="extractor-info-count">22 features</span>
+                  </div>
+                  <p class="extractor-info-desc">Lightweight canonical time series features</p>
+                </div>
+                <div class="extractor-info-item tsfresh">
+                  <div class="extractor-info-header">
+                    <span class="extractor-info-dot tsfresh"></span>
+                    <span class="extractor-info-name">TSFresh</span>
+                    <span class="extractor-info-count">783 features</span>
+                  </div>
+                  <p class="extractor-info-desc">Comprehensive statistical features library</p>
+                </div>
+                <div class="extractor-info-item topological">
+                  <div class="extractor-info-header">
+                    <span class="extractor-info-dot topological"></span>
+                    <span class="extractor-info-name">Topological</span>
+                    <span class="extractor-info-count">3 features</span>
+                  </div>
+                  <p class="extractor-info-desc">Persistence diagrams from TDA</p>
+                </div>
+              </div>
+
+              <div class="extractor-total">Total: 808 features</div>
+              <button class="btn btn-primary" id="btn-recommend-run-features" disabled>Extract Features</button>
+            </div>
+
+            <div class="card result-panel fixed-scroll-panel" id="recommend-feature-result-panel">
+              <h3 class="panel-title">Extraction Results</h3>
+              <div class="result-placeholder" id="recommend-features-placeholder">
+                <span>Upload data and run feature extraction to see results</span>
+              </div>
+
+              <div id="recommend-feature-results-container" style="display: none;">
+                <div class="feature-summary">
+                  <div class="feature-total">
+                    <div class="total-number" id="recommend-total-features">0</div>
+                    <div class="total-label">Feature Columns (Previewed)</div>
+                  </div>
+                  <span class="feature-summary-dataset" id="recommend-feature-summary-dataset"></span>
+                </div>
+
+                <div class="extractor-cards" id="recommend-extractor-cards"></div>
+
+                <div class="feature-preview-panel">
+                  <div class="feature-preview-header">
+                    <h4>Feature Content Preview</h4>
+                    <span class="feature-preview-dataset" id="recommend-feature-preview-dataset"></span>
+                  </div>
+                  <div class="feature-preview-tabs" id="recommend-feature-preview-tabs"></div>
+                  <div class="feature-preview-empty" id="recommend-feature-preview-empty">
+                    No feature preview available yet.
+                  </div>
+                  <div class="feature-preview-controls" id="recommend-feature-preview-controls" style="display: none;">
+                    <label for="recommend-feature-preview-row-select">Time Series</label>
+                    <select id="recommend-feature-preview-row-select"></select>
+                    <span class="feature-preview-note" id="recommend-feature-preview-note"></span>
+                  </div>
+                  <div class="feature-preview-chart-wrapper" id="recommend-feature-preview-chart-wrapper"
+                    style="display: none;">
+                    <canvas id="recommend-feature-preview-chart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Recommend -->
+          <div class="step-content" data-step="3">
+            <div class="recommend-left">
+              <div class="card">
+                <h3 class="panel-title">Recommendation Result</h3>
+                <div class="rank-list" id="recommend-rank-list">
+                  <div class="rank-item"><span class="rank-num">-</span><span class="rank-name">Run recommendation to
+                      see ranking</span></div>
+                </div>
+              </div>
+              <div class="card">
+                <h3 class="panel-title">Soft Voting Matrix</h3>
+                <p class="panel-desc">Each winning pipeline votes with probability; average determines winner</p>
+                <p class="panel-desc" id="voting-pipelines-meta"></p>
+                <div class="voting-table-wrapper">
+                  <table class="voting-table" id="voting-table">
+                    <thead>
+                      <tr>
+                        <th>Algorithm</th>
+                        <th>Pipeline1</th>
+                        <th>Pipeline2</th>
+                        <th>Pipeline3</th>
+                        <th>Average</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                      <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                      <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                      <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                      <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="card recommend-right">
+              <h3 class="panel-title">Baseline Comparison</h3>
+              <p class="panel-desc">Select baselines to compare. Train them first if not yet trained.</p>
+              <div class="baseline-tabs" id="baseline-tabs">
+                <label class="baseline-tab">
+                  <input type="checkbox" value="FLAML" checked>
+                  <span>FLAML</span>
+                </label>
+                <label class="baseline-tab">
+                  <input type="checkbox" value="Tune" checked>
+                  <span>Tune</span>
+                </label>
+                <label class="baseline-tab">
+                  <input type="checkbox" value="AutoFolio" checked>
+                  <span>AutoFolio</span>
+                </label>
+                <label class="baseline-tab">
+                  <input type="checkbox" value="RAHA" checked>
+                  <span>RAHA</span>
+                </label>
+              </div>
+              <div class="baseline-actions">
+                <button class="btn btn-primary btn-small" id="btn-train-selected">
+                  Train Selected Baselines
+                </button>
+              </div>
+              <div class="baseline-details" id="baseline-details">
+                <div class="baseline-card ImputePilot-card">
+                  <h4>ImputePilot</h4>
+                  <div class="baseline-info">
+                    <div>Recommend Algorithm: <span>--</span></div>
+                    <div>Confidence: <span>--</span></div>
+                    <div>Inference Time: <span>--</span></div>
+                  </div>
+                </div>
+              </div>
+              <button class="btn btn-primary" id="btn-get-imputation">Get Imputation</button>
+            </div>
+          </div>
+
+          <!-- Step 4: Impute & Result -->
+          <div class="step-content" data-step="4">
+            <div class="card full-width">
+              <div class="result-header">
+                <h3 class="panel-title">Recovered Time Series</h3>
+                <div class="recovered-series-controls" id="recovered-series-controls" style="display: none;">
+                  <label for="recovered-series-select">Time Series</label>
+                  <select id="recovered-series-select"></select>
+                  <span id="recovered-series-meta"></span>
+                </div>
+                <button class="btn btn-download" id="btn-download">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Download
+                </button>
+              </div>
+              <div class="chart-container large" id="recovered-chart-container">
+                <div class="chart-placeholder large" id="recovered-chart-placeholder">Chart Area</div>
+                <canvas id="recovered-ts-chart"></canvas>
+              </div>
+              <div class="metric-row four-col">
+                <div class="metric-card">
+                  <div class="metric-label">Algorithm used</div>
+                  <div class="metric-value" id="result-algo">ROSL</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">Missing Points</div>
+                  <div class="metric-value" id="result-missing">300</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">Recovery Rate</div>
+                  <div class="metric-value" id="result-rate">100%</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">Processing Time</div>
+                  <div class="metric-value" id="result-time">1.12s</div>
+                </div>
+              </div>
+            </div>
+            <!--
+            <div class="card full-width">
+              <h3 class="panel-title">Detailed Comparison</h3>
+              <div class="comparison-table-wrapper">
+                <table class="comparison-table" id="comparison-table">
+                  <thead>
+                    <tr>
+                      <th>Method</th>
+                      <th>Algorithm used</th>
+                      <th>RMSE</th>
+                      <th>MAE</th>
+                      <th>Runtime</th>
+                      <th>vs ImputePilot</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="highlight">
+                      <td>ImputePilot</td>
+                      <td>ROSL</td>
+                      <td>0.0123</td>
+                      <td>0.0111</td>
+                      <td>2.6s</td>
+                      <td>—</td>
+                    </tr>
+                    <tr>
+                      <td>FLAML</td>
+                      <td>CDRec</td>
+                      <td>0.0234</td>
+                      <td>0.0222</td>
+                      <td>3.2s</td>
+                      <td class="positive">+ 43% better</td>
+                    </tr>
+                    <tr>
+                      <td>Tune</td>
+                      <td>BRITS</td>
+                      <td>0.0345</td>
+                      <td>0.0333</td>
+                      <td>3.6s</td>
+                      <td class="positive">+ 54% better</td>
+                    </tr>
+                    <tr>
+                      <td>RAHA</td>
+                      <td>SVDImp</td>
+                      <td>0.0456</td>
+                      <td>0.0444</td>
+                      <td>4.2s</td>
+                      <td class="positive">+ 60% better</td>
+                    </tr>
+                    <tr>
+                      <td>AutoFolio</td>
+                      <td>TRMF</td>
+                      <td>0.567</td>
+                      <td>0.0555</td>
+                      <td>5.0s</td>
+                      <td class="positive">+ 70% better</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <button class="btn btn-primary btn-large" id="btn-downstream">
+                Downstream Evaluation →
+              </button>
+            </div>
+            -->
+            <div class="card full-width">
+              <button class="btn btn-primary btn-large" id="btn-downstream">
+                Downstream Evaluation →
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 5: Downstream Evaluation -->
+          <div class="step-content" data-step="5">
+            <div class="card full-width">
+              <h2 class="section-heading">Downstream Impact</h2>
+              <p class="panel-desc">Evaluate how imputation quality will impact downstream tasks</p>
+
+              <h3 class="panel-title">Select Downstream Task</h3>
+              <div class="task-selector">
+                <div class="task-card active" data-task="forecasting">
+                  <div class="task-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                    </svg>
+                  </div>
+                  <div class="task-info">
+                    <h4>Time Series Forecasting</h4>
+                    <p>Predict future values</p>
+                  </div>
+                </div>
+                <div class="task-card" data-task="classification">
+                  <div class="task-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="7" height="7" />
+                      <rect x="14" y="3" width="7" height="7" />
+                      <rect x="14" y="14" width="7" height="7" />
+                      <rect x="3" y="14" width="7" height="7" />
+                    </svg>
+                  </div>
+                  <div class="task-info">
+                    <h4>Time Series Classification</h4>
+                    <p>Categorize time series</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card full-width">
+              <h3 class="panel-title">Performance Comparison</h3>
+              <div class="performance-row">
+                <div class="performance-card with-imputepilot">
+                  <div class="perf-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <span>With ImputePilot</span>
+                  </div>
+                  <div class="perf-value" id="downstream-imputepilot-value">0.45</div>
+                  <div class="perf-metric" id="downstream-metric-imputepilot">sMAPE</div>
+                </div>
+                <div class="performance-card without-imputepilot">
+                  <div class="perf-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <span>Without ImputePilot</span>
+                  </div>
+                  <div class="perf-value" id="downstream-baseline-value">0.97</div>
+                  <div class="perf-metric" id="downstream-metric-baseline">sMAPE</div>
+                </div>
+                <div class="performance-card improvement">
+                  <div class="perf-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                      <polyline points="17 6 23 6 23 12" />
+                    </svg>
+                    <span>Improvements</span>
+                  </div>
+                  <div class="perf-value highlight" id="downstream-improvement">+55%</div>
+                  <div class="perf-metric">Performance improvement with ImputePilot</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Console ===== -->
+        <div class="console-panel">
+          <div class="console-header">Console Output</div>
+          <div class="console-body" id="recommend-console">
+            <div class="console-line">Waiting for commands ...</div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="{% static 'ImputePilot_api/app.js' %}?v=20260320b"></script>
+</body>
+
+</html>
