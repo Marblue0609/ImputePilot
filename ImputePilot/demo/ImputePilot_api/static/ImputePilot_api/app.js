@@ -42,7 +42,7 @@ const API_CONFIG = {
   },
 
   // Set to true to use mock data for testing
-  useMock: false,  // To be set to false
+  useMock: true,  // To be set to false
 };
 
 const PRIMARY_METHOD_KEY = 'ImputePilot';
