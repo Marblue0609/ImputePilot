@@ -31,6 +31,7 @@ from sklearn.cluster import KMeans
 from ImputePilot_api.ImputePilot_code.Datasets.Dataset import Dataset
 from ImputePilot_api.ImputePilot_code.Datasets.TrainingSet import TrainingSet
 from ImputePilot_api.dataset_categories import annotate_benchmark_rows, build_benchmark_category_summary
+from ImputePilot_api.preview import create_preview_from_upload
 
 PRIMARY_METHOD_NAME = "ImputePilot"
 _PRIMARY_METHOD_ALIAS_TOKENS = {"imputepilot", "ImputePilot", "adart"}
@@ -1424,6 +1425,26 @@ def index(request):
 
 
 # ========== Pipeline Views ==========
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def preview_training_data(request):
+    """Generate a dataset preview without saving files or changing training state."""
+    if 'files' not in request.FILES:
+        return JsonResponse({'error': 'No files uploaded'}, status=400)
+
+    try:
+        for uploaded_file in request.FILES.getlist('files'):
+            preview_data = create_preview_from_upload(uploaded_file)
+            if preview_data:
+                return JsonResponse({'preview': preview_data})
+    except (OSError, UnicodeError, zipfile.BadZipFile) as exc:
+        return JsonResponse({'error': f'Unable to read uploaded file: {exc}'}, status=400)
+
+    return JsonResponse({
+        'error': 'No previewable .csv, .txt, or .tsv file was found in the upload.'
+    }, status=400)
+
 
 @csrf_exempt  
 @require_http_methods(["POST"])

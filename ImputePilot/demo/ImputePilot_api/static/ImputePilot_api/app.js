@@ -8,6 +8,7 @@ const API_CONFIG = {
 
     // Pipeline
     uploadTraining: '/pipeline/upload/',
+    previewTraining: '/pipeline/preview/',
     runClustering: '/pipeline/clustering/',
     runLabeling: '/pipeline/labeling/',
     runFeatures: '/pipeline/features/',
@@ -1487,6 +1488,27 @@ let rwClassificationChart = null;
 let rwBenchmarkControlsBound = false;
 let rwBenchmarkRequestId = 0;
 let pipelinePreviewRequestId = 0;
+async function requestPipelinePreview(files) {
+  const formData = new FormData();
+  files.forEach(file => formData.append('files', file));
+
+  const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.previewTraining}`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!response.ok) {
+    let message = `Preview Error: ${response.statusText}`;
+    try {
+      const payload = await response.json();
+      message = payload.error || message;
+    } catch (_) {
+      // Preserve the HTTP status text when a non-JSON response is returned.
+    }
+    throw new Error(message);
+  }
+  return response.json();
+}
+
 
 function setPipelinePreviewPlaceholder(text) {
   const placeholder = document.getElementById('pipeline-preview-placeholder');
@@ -1508,7 +1530,16 @@ async function uploadPipelineForPreview() {
   btnPipelineContinue.disabled = true;
 
   try {
-    const result = await uploadFiles(API_CONFIG.endpoints.uploadTraining, AppState.pipelineFiles);
+    let result;
+    if (API_CONFIG.useMock) {
+      const previewResult = await requestPipelinePreview(AppState.pipelineFiles);
+      result = {
+        datasetId: `mock-dataset-${Date.now()}`,
+        preview: previewResult.preview,
+      };
+    } else {
+      result = await uploadFiles(API_CONFIG.endpoints.uploadTraining, AppState.pipelineFiles);
+    }
     if (requestId !== pipelinePreviewRequestId) return;
 
     AppState.pipelineUploadResult = result || null;

@@ -11,6 +11,7 @@ urlpatterns = [
     
     # Pipeline
     path('pipeline/upload/', views.upload_training_data, name='upload_training'),
+    path('pipeline/preview/', views.preview_training_data, name='preview_training'),
     path('pipeline/clustering/', views.run_clustering, name='clustering'),
     path('pipeline/labeling/', views.run_labeling, name='labeling'),
     path('pipeline/features/', views.run_features, name='features'),
