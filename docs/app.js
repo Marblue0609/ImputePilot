@@ -1490,8 +1490,7 @@ let rwBenchmarkControlsBound = false;
 let rwBenchmarkRequestId = 0;
 let pipelinePreviewRequestId = 0;
 
-function createStaticDemoPreview(files) {
-  const fileName = files?.[0]?.name || 'demo-time-series.csv';
+function createFallbackStaticDemoPreview(fileName = 'demo-time-series.csv') {
   const seriesRows = [
     ['12', '14', '16', '15', '18', 'nan', '21', '23', '22', '25', '27', '26', '29', '31', '30', '33'],
     ['9', '11', '10', '13', '15', '16', '', '19', '20', '18', '21', '24', '23', '25', '27', '28'],
@@ -1518,9 +1517,66 @@ function createStaticDemoPreview(files) {
   };
 }
 
+function createPreviewFromText(text, fileName) {
+  const allLines = String(text || '').split(/\r?\n/);
+  while (allLines.length && !allLines[allLines.length - 1].trim()) allLines.pop();
+  const previewLines = allLines.slice(0, 10).map((line) => line.trim());
+  if (!previewLines.length) return null;
+
+  const firstLine = previewLines[0];
+  const delimiter = firstLine.includes(',') ? ',' : (firstLine.includes('\t') ? '\t' : ' ');
+  const rows = previewLines.map((line) => (
+    delimiter === ' ' ? line.split(/\s+/) : line.split(delimiter)
+  ));
+  const chartData = (rows[0] || []).map((value, index) => {
+    const normalized = String(value ?? '').trim();
+    const numericValue = Number(normalized);
+    const missing = !normalized || normalized.toLowerCase() === 'nan' || !Number.isFinite(numericValue);
+    return { x: index, y: missing ? null : numericValue, missing };
+  });
+  const missingPoints = chartData.filter((point) => point.missing).length;
+
+  return {
+    fileName,
+    totalRows: allLines.length,
+    columns: rows[0]?.length || 0,
+    headers: rows[0] || [],
+    rows: rows.slice(1),
+    seriesRows: rows,
+    chartData,
+    totalPoints: chartData.length,
+    missingPoints,
+    missingRate: chartData.length ? Number(((missingPoints / chartData.length) * 100).toFixed(1)) : 0,
+  };
+}
+
+async function createStaticDemoPreview(files) {
+  const file = files?.[0];
+  if (!file) return createFallbackStaticDemoPreview();
+
+  try {
+    const name = file.name || 'uploaded-data.csv';
+    if (/\.(csv|txt|tsv)$/i.test(name)) {
+      return createPreviewFromText(await file.text(), name) || createFallbackStaticDemoPreview(name);
+    }
+    if (/\.zip$/i.test(name) && window.JSZip) {
+      const archive = await window.JSZip.loadAsync(file);
+      const entryName = Object.keys(archive.files).find((candidate) => /\.(csv|txt|tsv)$/i.test(candidate));
+      if (entryName) {
+        const text = await archive.files[entryName].async('string');
+        return createPreviewFromText(text, entryName) || createFallbackStaticDemoPreview(entryName);
+      }
+    }
+  } catch (error) {
+    console.warn('[Static demo] Unable to parse local preview:', error);
+  }
+
+  return createFallbackStaticDemoPreview(file.name);
+}
+
 async function requestPipelinePreview(files) {
   if (window.IMPUTEPILOT_STATIC_DEMO) {
-    return { preview: createStaticDemoPreview(files) };
+    return { preview: await createStaticDemoPreview(files) };
   }
 
   const formData = new FormData();
@@ -1545,7 +1601,7 @@ async function requestPipelinePreview(files) {
 
 async function requestInferencePreview(files) {
   if (window.IMPUTEPILOT_STATIC_DEMO) {
-    return { preview: createStaticDemoPreview(files) };
+    return { preview: await createStaticDemoPreview(files) };
   }
 
   const formData = new FormData();

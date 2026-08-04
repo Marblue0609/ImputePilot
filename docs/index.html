@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="style.css?v=20260804h">
   <!-- Chart.js for time series visualization -->
   <script src="vendor/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
 
 <body>
@@ -161,7 +162,7 @@
               <h3 class="panel-title">Uploading Training Dataset</h3>
               <p class="panel-desc">Upload time series data. The paper uses 67K series from 107 datasets.</p>
               <div class="upload-zone" id="pipeline-upload-zone">
-                <input type="file" id="pipeline-file-input" accept=".zip" multiple hidden>
+                <input type="file" id="pipeline-file-input" accept=".zip,.csv,.txt,.tsv" multiple hidden>
                 <div class="upload-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -170,7 +171,7 @@
                   </svg>
                 </div>
                 <p class="upload-text">Click to upload training data</p>
-                <p class="upload-hint">.zip</p>
+                <p class="upload-hint">.zip, .csv, .txt, .tsv</p>
               </div>
               <div class="file-list" id="pipeline-file-list"></div>
               <button class="btn btn-primary" id="btn-pipeline-continue" disabled>Continue to feature
@@ -535,7 +536,7 @@
             <div class="card upload-panel">
               <h3 class="panel-title">Upload Incomplete Time Series</h3>
               <div class="upload-zone" id="recommend-upload-zone">
-                <input type="file" id="recommend-file-input" accept=".zip" hidden>
+                <input type="file" id="recommend-file-input" accept=".zip,.csv,.txt,.tsv" hidden>
                 <div class="upload-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -544,7 +545,7 @@
                   </svg>
                 </div>
                 <p class="upload-text">Click to upload your data</p>
-                <p class="upload-hint">.zip</p>
+                <p class="upload-hint">.zip, .csv, .txt, .tsv</p>
               </div>
               <button class="btn btn-primary" id="btn-recommend-continue" disabled>Continue to Feature Extraction
                 →</button>
