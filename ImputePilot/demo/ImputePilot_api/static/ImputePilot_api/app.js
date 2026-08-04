@@ -24,6 +24,7 @@ const API_CONFIG = {
 
     // Recommend
     uploadInference: '/recommend/upload/',
+    previewInference: '/recommend/preview/',
     runRecommendFeatures: '/recommend/features/',
     getRecommendation: '/recommend/recommend/',
     compareBaselines: '/recommend/compare/',
@@ -1509,6 +1510,27 @@ async function requestPipelinePreview(files) {
   return response.json();
 }
 
+async function requestInferencePreview(files) {
+  const formData = new FormData();
+  files.forEach(file => formData.append('files', file));
+
+  const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.previewInference}`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!response.ok) {
+    let message = `Preview Error: ${response.statusText}`;
+    try {
+      const payload = await response.json();
+      message = payload.error || message;
+    } catch (_) {
+      // Preserve the HTTP status text when a non-JSON response is returned.
+    }
+    throw new Error(message);
+  }
+  return response.json();
+}
+
 
 function setPipelinePreviewPlaceholder(text) {
   const placeholder = document.getElementById('pipeline-preview-placeholder');
@@ -1918,34 +1940,56 @@ function previewRecommendFile(preview) {
   if (placeholder) placeholder.style.display = 'none';
   if (content) content.style.display = 'block';
 
+  const seriesList = buildPipelinePreviewSeries(preview);
+  const totalSeries = Number(preview?.totalRows) || seriesList.length;
+  const previewSeriesCount = Math.min(seriesList.length, totalSeries);
   const statsEl = document.getElementById('recommend-preview-stats');
   if (statsEl) {
-    statsEl.innerHTML = `
+    const seriesOptions = seriesList
+      .map((series, index) => `<option value="${index}">${series.label}</option>`)
+      .join('');
+    statsEl.innerHTML = seriesList.length ? `
       <span class="stat-badge">${preview.fileName}</span>
-      <span class="stat-badge">${preview.totalRows} time series</span>
-      <span class="stat-badge">${preview.columns} time points</span>
-    `;
+      <label class="stat-badge" for="recommend-series-select">Time Series
+        <select id="recommend-series-select">${seriesOptions}</select>
+      </label>
+      <span class="stat-badge">First ${previewSeriesCount} / ${totalSeries} time series</span>
+      <span class="stat-badge" id="recommend-selected-points-count"></span>
+    ` : '<span class="stat-badge">No time series available</span>';
   }
 
-  const missingInfoEl = document.getElementById('recommend-missing-info');
-  if (missingInfoEl && preview.missingPoints !== undefined) {
-    missingInfoEl.innerHTML = `
-      <div class="info-item">
-        <span class="legend-dot valid"></span>
-        <span class="stat-label">Valid Points:</span>
-        <span class="stat-value">${preview.totalPoints - preview.missingPoints}</span>
-      </div>
-      <div class="info-item">
-        <span class="legend-dot missing"></span>
-        <span class="stat-label">Missing Points:</span>
-        <span class="stat-value">${preview.missingPoints} (${preview.missingRate}%)</span>
-      </div>
-    `;
-  }
+  const renderSelectedSeries = (rawIndex) => {
+    const index = Number.isInteger(rawIndex) ? rawIndex : parseInt(rawIndex, 10);
+    const safeIndex = Number.isFinite(index)
+      ? Math.min(Math.max(index, 0), seriesList.length - 1)
+      : 0;
+    const selected = seriesList[safeIndex];
+    if (!selected) return;
 
-  if (preview.chartData && preview.chartData.length > 0) {
-    renderRecommendTimeSeriesChart(preview.chartData);
-  }
+    const pointsCountEl = document.getElementById('recommend-selected-points-count');
+    if (pointsCountEl) pointsCountEl.textContent = `${selected.totalPoints} time points`;
+
+    const missingInfoEl = document.getElementById('recommend-missing-info');
+    if (missingInfoEl) {
+      missingInfoEl.innerHTML = `
+        <div class="info-item">
+          <span class="legend-dot valid"></span>
+          <span class="stat-label">Valid Points:</span>
+          <span class="stat-value">${selected.totalPoints - selected.missingPoints}</span>
+        </div>
+        <div class="info-item">
+          <span class="legend-dot missing"></span>
+          <span class="stat-label">Missing Points:</span>
+          <span class="stat-value">${selected.missingPoints} (${selected.missingRate}%)</span>
+        </div>
+      `;
+    }
+    renderRecommendTimeSeriesChart(selected.chartData);
+  };
+
+  const selectEl = document.getElementById('recommend-series-select');
+  if (selectEl) selectEl.addEventListener('change', (event) => renderSelectedSeries(event.target.value));
+  renderSelectedSeries(0);
 
   if (!Array.isArray(AppState.recommendSeriesList) || AppState.recommendSeriesList.length === 0) {
     const previewSeriesList = buildPipelinePreviewSeries(preview);
@@ -3727,7 +3771,16 @@ async function uploadRecommendForPreview() {
   setRecommendPreviewPlaceholder('Uploading file and generating preview...');
 
   try {
-    const uploadResult = await uploadFiles(API_CONFIG.endpoints.uploadInference, AppState.recommendFiles);
+    let uploadResult;
+    if (API_CONFIG.useMock) {
+      const previewResult = await requestInferencePreview(AppState.recommendFiles);
+      uploadResult = {
+        datasetId: `mock-inference-${Date.now()}`,
+        preview: previewResult.preview,
+      };
+    } else {
+      uploadResult = await uploadFiles(API_CONFIG.endpoints.uploadInference, AppState.recommendFiles);
+    }
     if (requestId !== recommendPreviewRequestId) return;
 
     AppState.recommendUploadResult = uploadResult || null;

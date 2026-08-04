@@ -4747,6 +4747,26 @@ def run_full_evaluation(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+def preview_inference_data(request):
+    """Generate an inference preview without replacing the active inference data."""
+    if 'files' not in request.FILES:
+        return JsonResponse({'error': 'No files uploaded'}, status=400)
+
+    try:
+        for uploaded_file in request.FILES.getlist('files'):
+            preview_data = create_preview_from_upload(uploaded_file)
+            if preview_data:
+                return JsonResponse({'preview': preview_data})
+    except (OSError, UnicodeError, zipfile.BadZipFile) as exc:
+        return JsonResponse({'error': f'Unable to read uploaded file: {exc}'}, status=400)
+
+    return JsonResponse({
+        'error': 'No previewable .csv, .txt, or .tsv file was found in the upload.'
+    }, status=400)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
 def upload_inference(request):
     try:
         if 'files' not in request.FILES:
@@ -4754,6 +4774,18 @@ def upload_inference(request):
         
         files = request.FILES.getlist('files')
         uploaded_files = []
+
+        # Keep inference previews consistent with pipeline previews, including
+        # the first ten selectable time series.
+        preview_data = None
+        try:
+            for uploaded_file in files:
+                preview_data = create_preview_from_upload(uploaded_file)
+                uploaded_file.seek(0)
+                if preview_data:
+                    break
+        except (OSError, UnicodeError, zipfile.BadZipFile) as exc:
+            return JsonResponse({'error': f'Unable to read uploaded file: {exc}'}, status=400)
         
         inference_dir = AdartsService.get_inference_dir()
         
@@ -4789,91 +4821,6 @@ def upload_inference(request):
             uploaded_files.append(safe_name)
             print(f"[INFO] Inference file saved: {file_path}")
 
-        preview_data = None
-        try:
-            def _build_preview_from_lines(lines, source_name):
-                if not lines:
-                    return None
-
-                first_line = lines[0]
-                if ',' in first_line:
-                    delim = ','
-                elif '\t' in first_line:
-                    delim = '\t'
-                else:
-                    delim = ' '
-
-                rows = [line.split(delim) for line in lines]
-
-                chart_data = []
-                if rows and len(rows[0]) > 0:
-                    first_series = rows[0]
-                    for idx, val in enumerate(first_series):
-                        try:
-                            float_val = float(val)
-                            if np.isnan(float_val) or val.strip() == '' or val.strip().lower() == 'nan':
-                                chart_data.append({'x': idx, 'y': None, 'missing': True})
-                            else:
-                                chart_data.append({'x': idx, 'y': float_val, 'missing': False})
-                        except (ValueError, TypeError):
-                            chart_data.append({'x': idx, 'y': None, 'missing': True})
-
-                total_points = len(chart_data)
-                missing_points = sum(1 for p in chart_data if p['missing'])
-                missing_rate = round(missing_points / total_points * 100, 1) if total_points > 0 else 0
-
-                return {
-                    'fileName': source_name,
-                    'totalRows': len(lines),
-                    'columns': len(rows[0]) if rows else 0,
-                    'headers': rows[0] if rows else [],
-                    'rows': rows[1:9] if len(rows) > 1 else [],
-                    'chartData': chart_data[:500],
-                    'totalPoints': total_points,
-                    'missingPoints': missing_points,
-                    'missingRate': missing_rate
-                }
-
-            def _read_preview_lines_from_file(path):
-                lines = []
-                with open(path, 'rb') as f:
-                    for i, line in enumerate(f):
-                        if i >= 10:
-                            break
-                        try:
-                            lines.append(line.decode('utf-8').strip())
-                        except UnicodeDecodeError:
-                            lines.append(line.decode('latin-1').strip())
-                return lines
-
-            # Priority: directly uploaded flat files
-            preview_candidates = []
-            for file_name in uploaded_files:
-                if file_name.lower().endswith(('.csv', '.txt', '.tsv')):
-                    candidate = os.path.join(inference_dir, file_name)
-                    if os.path.exists(candidate):
-                        preview_candidates.append(candidate)
-
-            # Fallback: extracted files from uploaded zip archives
-            if not preview_candidates:
-                for root, _, filenames in os.walk(inference_dir):
-                    for filename in filenames:
-                        if filename.lower().endswith(('.csv', '.txt', '.tsv')):
-                            preview_candidates.append(os.path.join(root, filename))
-                preview_candidates.sort()
-
-            for candidate_path in preview_candidates:
-                preview_lines = _read_preview_lines_from_file(candidate_path)
-                source_name = os.path.relpath(candidate_path, inference_dir)
-                preview_data = _build_preview_from_lines(preview_lines, source_name)
-                if preview_data:
-                    print(f"[INFO] Inference preview generated from: {source_name}")
-                    break
-        except Exception as e:
-            print(f"[WARN] Failed to generate inference preview: {e}")
-            traceback.print_exc()
-            preview_data = None
-        
         dataset_id = f'inference-{int(time.time())}'
         
         return JsonResponse({

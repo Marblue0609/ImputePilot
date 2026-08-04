@@ -29,6 +29,7 @@ urlpatterns = [
     
     # Recommend
     path('recommend/upload/', views.upload_inference, name='upload_inference'),
+    path('recommend/preview/', views.preview_inference_data, name='preview_inference'),
     path('recommend/features/', views.extract_recommend_features, name='recommend_features'),
     path('recommend/recommend/', views.get_recommendation, name='recommendation'),
     path('recommend/compare/', views.compare_baselines, name='compare_baselines'),
