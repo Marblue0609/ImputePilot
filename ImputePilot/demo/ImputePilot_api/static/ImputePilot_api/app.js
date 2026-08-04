@@ -3200,7 +3200,7 @@ function renderFeatureResults(featurePayload) {
     return;
   }
   if (placeholder) placeholder.style.display = 'none';
-  container.style.display = 'block';
+  container.style.display = 'flex';
 
   // Define extractor metadata
   const extractorMeta = {
@@ -3242,8 +3242,6 @@ function renderFeatureResults(featurePayload) {
   // Render extractor cards
   cardsContainer.innerHTML = cardRows.map((f) => {
     const meta = extractorMeta[f.key] || { desc: 'Feature extractor' };
-    const percentage = total > 0 ? ((f.value / total) * 100).toFixed(1) : 0;
-    const datasetCountText = f.datasetsProcessed > 0 ? `${f.datasetsProcessed} dataset${f.datasetsProcessed === 1 ? '' : 's'} processed` : 'Dataset count unavailable';
     return `
       <div class="extractor-card ${f.key}">
         <div class="extractor-header">
@@ -3252,7 +3250,6 @@ function renderFeatureResults(featurePayload) {
         </div>
         <div class="extractor-count">${f.value}</div>
         <div class="extractor-desc">${meta.desc}</div>
-        <div class="extractor-percentage">${percentage}% of total · ${datasetCountText}</div>
       </div>
     `;
   }).join('');
@@ -3530,7 +3527,6 @@ function renderRecommendFeatureResults(featurePayload) {
 
   cardsContainer.innerHTML = cardRows.map((f) => {
     const meta = extractorMeta[f.key] || { desc: 'Feature extractor' };
-    const percentage = total > 0 ? ((f.value / total) * 100).toFixed(1) : 0;
     return `
       <div class="extractor-card ${f.key}">
         <div class="extractor-header">
@@ -3539,7 +3535,6 @@ function renderRecommendFeatureResults(featurePayload) {
         </div>
         <div class="extractor-count">${f.value}</div>
         <div class="extractor-desc">${meta.desc}</div>
-        <div class="extractor-percentage">${percentage}% of total</div>
       </div>
     `;
   }).join('');
