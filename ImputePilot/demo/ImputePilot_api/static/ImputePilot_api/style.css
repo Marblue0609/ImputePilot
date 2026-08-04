@@ -490,9 +490,12 @@ body {
 
 /* ========== Stepper - Square (Pipeline) ========== */
 .stepper-card {
+  height: 136px;
+  min-height: 136px;
+  max-height: 136px;
+  flex: 0 0 136px;
   padding: 24px 30px;
   margin-bottom: 20px;
-  min-height: auto;
 }
 
 .stepper {
@@ -1009,6 +1012,15 @@ body {
   flex-shrink: 0;
 }
 
+#labeling-results > .result-item {
+  /* Match a collapsed cluster card: 36px summary + 12px top/bottom padding + borders. */
+  height: 62px;
+  min-height: 62px;
+  max-height: 62px;
+  flex: 0 0 62px;
+  padding: 12px 14px;
+}
+
 #cluster-results .cluster-result-item,
 #cluster-results .cluster-summary,
 #cluster-results .cluster-preview-wrap,
@@ -1050,6 +1062,11 @@ body {
 
 #feature-results-container .feature-preview-panel {
   margin-top: 0;
+}
+
+/* The extractor summary cards are not shown in the pipeline results view. */
+#feature-results-container #extractor-cards {
+  display: none;
 }
 
 #cluster-results {
@@ -2772,7 +2789,7 @@ body {
 #page-recommend.feature-layout-active #recommend-feature-results-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 #page-recommend #recommend-feature-config-panel,
@@ -2796,7 +2813,7 @@ body {
 #page-recommend #recommend-feature-results-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 #page-recommend #recommend-feature-result-panel .feature-summary {
@@ -2812,7 +2829,16 @@ body {
   margin-bottom: 0;
 }
 
+#page-recommend #recommend-feature-results-container #recommend-extractor-cards {
+  display: none;
+}
+
 #page-recommend #recommend-feature-result-panel .extractor-card {
+  padding: 12px;
+}
+
+#page-recommend #recommend-feature-result-panel .feature-preview-panel {
+  margin-top: 0;
   padding: 12px;
 }
 

@@ -1489,7 +1489,96 @@ let rwClassificationChart = null;
 let rwBenchmarkControlsBound = false;
 let rwBenchmarkRequestId = 0;
 let pipelinePreviewRequestId = 0;
+
+function createFallbackStaticDemoPreview(fileName = 'demo-time-series.csv') {
+  const seriesRows = [
+    ['12', '14', '16', '15', '18', 'nan', '21', '23', '22', '25', '27', '26', '29', '31', '30', '33'],
+    ['9', '11', '10', '13', '15', '16', '', '19', '20', '18', '21', '24', '23', '25', '27', '28'],
+    ['20', '19', '22', '24', '23', '25', '27', 'nan', '30', '29', '31', '33', '34', '32', '35', '37'],
+  ];
+  const chartData = seriesRows[0].map((value, index) => {
+    const numericValue = Number(value);
+    const missing = !value || value.toLowerCase() === 'nan' || !Number.isFinite(numericValue);
+    return { x: index, y: missing ? null : numericValue, missing };
+  });
+  const missingPoints = chartData.filter((point) => point.missing).length;
+
+  return {
+    fileName,
+    totalRows: seriesRows.length,
+    columns: seriesRows[0].length,
+    headers: seriesRows[0],
+    rows: seriesRows.slice(1),
+    seriesRows,
+    chartData,
+    totalPoints: chartData.length,
+    missingPoints,
+    missingRate: Number(((missingPoints / chartData.length) * 100).toFixed(1)),
+  };
+}
+
+function createPreviewFromText(text, fileName) {
+  const allLines = String(text || '').split(/\r?\n/);
+  while (allLines.length && !allLines[allLines.length - 1].trim()) allLines.pop();
+  const previewLines = allLines.slice(0, 10).map((line) => line.trim());
+  if (!previewLines.length) return null;
+
+  const firstLine = previewLines[0];
+  const delimiter = firstLine.includes(',') ? ',' : (firstLine.includes('\t') ? '\t' : ' ');
+  const rows = previewLines.map((line) => (
+    delimiter === ' ' ? line.split(/\s+/) : line.split(delimiter)
+  ));
+  const chartData = (rows[0] || []).map((value, index) => {
+    const normalized = String(value ?? '').trim();
+    const numericValue = Number(normalized);
+    const missing = !normalized || normalized.toLowerCase() === 'nan' || !Number.isFinite(numericValue);
+    return { x: index, y: missing ? null : numericValue, missing };
+  });
+  const missingPoints = chartData.filter((point) => point.missing).length;
+
+  return {
+    fileName,
+    totalRows: allLines.length,
+    columns: rows[0]?.length || 0,
+    headers: rows[0] || [],
+    rows: rows.slice(1),
+    seriesRows: rows,
+    chartData,
+    totalPoints: chartData.length,
+    missingPoints,
+    missingRate: chartData.length ? Number(((missingPoints / chartData.length) * 100).toFixed(1)) : 0,
+  };
+}
+
+async function createStaticDemoPreview(files) {
+  const file = files?.[0];
+  if (!file) return createFallbackStaticDemoPreview();
+
+  try {
+    const name = file.name || 'uploaded-data.csv';
+    if (/\.(csv|txt|tsv)$/i.test(name)) {
+      return createPreviewFromText(await file.text(), name) || createFallbackStaticDemoPreview(name);
+    }
+    if (/\.zip$/i.test(name) && window.JSZip) {
+      const archive = await window.JSZip.loadAsync(file);
+      const entryName = Object.keys(archive.files).find((candidate) => /\.(csv|txt|tsv)$/i.test(candidate));
+      if (entryName) {
+        const text = await archive.files[entryName].async('string');
+        return createPreviewFromText(text, entryName) || createFallbackStaticDemoPreview(entryName);
+      }
+    }
+  } catch (error) {
+    console.warn('[Static demo] Unable to parse local preview:', error);
+  }
+
+  return createFallbackStaticDemoPreview(file.name);
+}
+
 async function requestPipelinePreview(files) {
+  if (window.IMPUTEPILOT_STATIC_DEMO) {
+    return { preview: await createStaticDemoPreview(files) };
+  }
+
   const formData = new FormData();
   files.forEach(file => formData.append('files', file));
 
@@ -1511,6 +1600,10 @@ async function requestPipelinePreview(files) {
 }
 
 async function requestInferencePreview(files) {
+  if (window.IMPUTEPILOT_STATIC_DEMO) {
+    return { preview: await createStaticDemoPreview(files) };
+  }
+
   const formData = new FormData();
   files.forEach(file => formData.append('files', file));
 
@@ -3487,7 +3580,7 @@ function renderRecommendFeatureResults(featurePayload) {
     return;
   }
   if (placeholder) placeholder.style.display = 'none';
-  container.style.display = 'block';
+  container.style.display = 'flex';
 
   const extractorMeta = {
     catch22: { desc: 'Lightweight canonical time series features' },
@@ -3873,6 +3966,26 @@ if (btnRecommendRunFeatures) {
       return;
     }
 
+    // Keep feature extraction and recommendation as separate user actions.
+    if (recommendFeaturesCompleted) {
+      try {
+        btnRecommendRunFeatures.classList.add('loading');
+        btnRecommendRunFeatures.textContent = 'Recommending...';
+        logRecommend('Running recommendation from extracted features...', 'info');
+        await executeRecommendation();
+        recommendationCompleted = true;
+        btnRecommendRunFeatures.classList.remove('loading');
+        btnRecommendRunFeatures.textContent = 'Done';
+        updateRecommendStepper(3);
+        logRecommend('Recommendation complete!', 'success');
+      } catch (error) {
+        btnRecommendRunFeatures.classList.remove('loading');
+        btnRecommendRunFeatures.textContent = 'Continue to Recommendation →';
+        logRecommend(`Recommendation failed: ${error.message}`, 'error');
+      }
+      return;
+    }
+
     try {
       btnRecommendRunFeatures.classList.add('loading');
       btnRecommendRunFeatures.textContent = 'Extracting...';
@@ -3893,19 +4006,13 @@ if (btnRecommendRunFeatures) {
       renderRecommendFeatureResults(normalized);
       recommendFeaturesCompleted = true;
 
-      logRecommend('Feature extraction completed. Running recommendation...', 'info');
-      btnRecommendRunFeatures.textContent = 'Recommending...';
-      await executeRecommendation();
-      recommendationCompleted = true;
-
       btnRecommendRunFeatures.classList.remove('loading');
-      btnRecommendRunFeatures.textContent = 'Done';
-      updateRecommendStepper(3);
-      logRecommend('Recommendation complete!', 'success');
+      btnRecommendRunFeatures.textContent = 'Continue to Recommendation →';
+      logRecommend('Feature extraction complete. Click “Continue to Recommendation” to proceed.', 'success');
     } catch (error) {
       btnRecommendRunFeatures.classList.remove('loading');
       btnRecommendRunFeatures.textContent = 'Extract Features';
-      logRecommend(`Feature extraction/recommendation failed: ${error.message}`, 'error');
+      logRecommend(`Feature extraction failed: ${error.message}`, 'error');
     }
   });
 }

@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ImputePilot Time Series Imputation</title>
   <link rel="icon" href="{% static 'ImputePilot_api/favicon.svg' %}" type="image/svg+xml">
-  <link rel="stylesheet" href="{% static 'ImputePilot_api/style.css' %}?v=20260804d">
+  <link rel="stylesheet" href="{% static 'ImputePilot_api/style.css' %}?v=20260804h">
   <!-- Chart.js for time series visualization -->
   <script src="{% static 'ImputePilot_api/vendor/chart.umd.min.js' %}"></script>
 </head>
@@ -162,7 +162,7 @@
               <h3 class="panel-title">Uploading Training Dataset</h3>
               <p class="panel-desc">Upload time series data. The paper uses 67K series from 107 datasets.</p>
               <div class="upload-zone" id="pipeline-upload-zone">
-                <input type="file" id="pipeline-file-input" accept=".zip" multiple hidden>
+                <input type="file" id="pipeline-file-input" accept=".zip,.csv,.txt,.tsv" multiple hidden>
                 <div class="upload-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -171,7 +171,7 @@
                   </svg>
                 </div>
                 <p class="upload-text">Click to upload training data</p>
-                <p class="upload-hint">.zip</p>
+                <p class="upload-hint">.zip, .csv, .txt, .tsv</p>
               </div>
               <div class="file-list" id="pipeline-file-list"></div>
               <button class="btn btn-primary" id="btn-pipeline-continue" disabled>Continue to feature
@@ -536,7 +536,7 @@
             <div class="card upload-panel">
               <h3 class="panel-title">Upload Incomplete Time Series</h3>
               <div class="upload-zone" id="recommend-upload-zone">
-                <input type="file" id="recommend-file-input" accept=".zip" hidden>
+                <input type="file" id="recommend-file-input" accept=".zip,.csv,.txt,.tsv" hidden>
                 <div class="upload-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -545,7 +545,7 @@
                   </svg>
                 </div>
                 <p class="upload-text">Click to upload your data</p>
-                <p class="upload-hint">.zip</p>
+                <p class="upload-hint">.zip, .csv, .txt, .tsv</p>
               </div>
               <button class="btn btn-primary" id="btn-recommend-continue" disabled>Continue to Feature Extraction
                 →</button>
@@ -573,6 +573,7 @@
               <h3 class="panel-title">Feature Extraction (Inference Data)</h3>
               <p class="panel-desc">Extract 808 features using 3 extractors (Catch22 + TSFresh + Topological)</p>
 
+
               <div class="extractor-info-list">
                 <div class="extractor-info-item catch22">
                   <div class="extractor-info-header">
@@ -599,6 +600,7 @@
                   <p class="extractor-info-desc">Persistence diagrams from TDA</p>
                 </div>
               </div>
+
 
               <div class="extractor-total">Total: 808 features</div>
               <button class="btn btn-primary" id="btn-recommend-run-features" disabled>Extract Features</button>
@@ -952,7 +954,7 @@
     </main>
   </div>
 
-  <script src="{% static 'ImputePilot_api/app.js' %}?v=20260804b"></script>
+  <script src="{% static 'ImputePilot_api/app.js' %}?v=20260804e"></script>
 </body>
 
 </html>
