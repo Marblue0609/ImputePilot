@@ -1992,8 +1992,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex: 1;
-  margin-bottom: 12px;
+  flex: 0 0 auto;
+  margin-bottom: 16px;
 }
 
 .baseline-card {
@@ -2035,9 +2035,19 @@ body {
 }
 
 .baseline-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
   font-size: 13px;
   color: #6b7280;
   line-height: 1.5;
+}
+
+.baseline-info > div {
+  flex: 0 1 auto;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .baseline-info span {
