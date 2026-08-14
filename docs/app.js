@@ -3293,7 +3293,7 @@ function renderFeatureResults(featurePayload) {
     return;
   }
   if (placeholder) placeholder.style.display = 'none';
-  container.style.display = 'block';
+  container.style.display = 'flex';
 
   // Define extractor metadata
   const extractorMeta = {
@@ -3580,7 +3580,7 @@ function renderRecommendFeatureResults(featurePayload) {
     return;
   }
   if (placeholder) placeholder.style.display = 'none';
-  container.style.display = 'block';
+  container.style.display = 'flex';
 
   const extractorMeta = {
     catch22: { desc: 'Lightweight canonical time series features' },

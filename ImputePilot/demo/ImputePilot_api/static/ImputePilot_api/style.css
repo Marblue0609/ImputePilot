@@ -1049,6 +1049,21 @@ body {
   padding-right: 4px;
 }
 
+#feature-results-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#feature-results-container .feature-summary,
+#feature-results-container .extractor-cards {
+  margin-bottom: 0;
+}
+
+#feature-results-container .feature-preview-panel {
+  margin-top: 0;
+}
+
 #cluster-results {
   justify-content: flex-start;
   align-items: stretch;
@@ -2676,7 +2691,7 @@ body {
   justify-content: space-between;
   gap: 12px;
   padding: 20px;
-  background: #3b48f6;
+  background: #7d3bf6;
   border-radius: 12px;
   margin-bottom: 20px;
   color: white;
