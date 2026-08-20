@@ -7,15 +7,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ImputePilot Time Series Imputation</title>
   <link rel="icon" href="{% static 'ImputePilot_api/favicon.svg' %}" type="image/svg+xml">
-  <link rel="stylesheet" href="{% static 'ImputePilot_api/style.css' %}?v=20260814b">
+  <link rel="stylesheet" href="{% static 'ImputePilot_api/style.css' %}?v=20260820a">
   <!-- Chart.js for time series visualization -->
   <script src="{% static 'ImputePilot_api/vendor/chart.umd.min.js' %}"></script>
 </head>
 
 <body>
   <div class="app">
+    <header class="mobile-header">
+      <button id="mobile-menu-toggle" class="mobile-menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="main-sidebar">
+        <span></span><span></span><span></span>
+      </button>
+      <span class="mobile-brand">ImputePilot</span>
+    </header>
+    <div id="mobile-menu-backdrop" class="mobile-menu-backdrop" aria-hidden="true"></div>
     <!-- ========== Sidebar ========== -->
-    <div class="sidebar">
+    <div id="main-sidebar" class="sidebar">
       <div class="logo">
         <h1>ImputePilot</h1>
         <p>Time Series Imputation</p>

@@ -14,6 +14,11 @@ body {
   display: flex;
 }
 
+.mobile-header,
+.mobile-menu-backdrop {
+  display: none;
+}
+
 /* ========== Sidebar ========== */
 .sidebar {
   width: 260px;
@@ -3137,6 +3142,164 @@ body {
 }
 
 @media (max-width: 768px) {
+  .app {
+    display: block;
+  }
+
+  .mobile-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 58px;
+    padding: 0 16px;
+    background: #0b1b5a;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
+  }
+
+  .mobile-brand {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+  }
+
+  .mobile-menu-toggle {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    width: 40px;
+    height: 40px;
+    padding: 9px;
+    border: 0;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    cursor: pointer;
+  }
+
+  .mobile-menu-toggle span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    border-radius: 1px;
+    background: #fff;
+  }
+
+  .mobile-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: none;
+    background: rgba(15, 23, 42, 0.42);
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    width: min(280px, 82vw);
+    min-height: 100dvh;
+    padding: 24px 18px;
+    overflow-y: auto;
+    transform: translateX(-105%);
+    transition: transform 0.2s ease;
+    box-shadow: 8px 0 24px rgba(15, 23, 42, 0.25);
+  }
+
+  body.mobile-menu-open {
+    overflow: hidden;
+  }
+
+  body.mobile-menu-open .sidebar {
+    transform: translateX(0);
+  }
+
+  body.mobile-menu-open .mobile-menu-backdrop {
+    display: block;
+  }
+
+  .main {
+    min-height: calc(100dvh - 58px);
+    margin: 0;
+    padding: 16px;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .main.cluster-layout-lock,
+  #page-pipeline.cluster-layout-active.page.active,
+  #page-recommend.feature-layout-active.page.active {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .page-title {
+    font-size: 26px;
+  }
+
+  .page-subtitle {
+    line-height: 1.45;
+  }
+
+  .card-row {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .stepper-card {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    padding: 14px;
+    overflow-x: auto;
+  }
+
+  .stepper.stepper-square,
+  .stepper.stepper-circle {
+    min-width: 620px;
+    flex-wrap: nowrap;
+  }
+
+  .stepper-square .step {
+    min-width: 108px;
+  }
+
+  .stepper-square .step-icon,
+  .stepper-circle .step-icon {
+    width: 46px;
+    height: 46px;
+  }
+
+  .stepper-square .step-label,
+  .stepper-circle .step-label {
+    font-size: 12px;
+  }
+
+  .stepper-circle .step-arrow {
+    top: 12px;
+  }
+
+  .benchmark-controls,
+  .feature-preview-controls {
+    align-items: stretch;
+  }
+
+  .benchmark-control,
+  .feature-preview-controls select,
+  .feature-preview-controls button {
+    width: 100%;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .fixed-scroll-panel {
     height: auto;
     min-height: 0;
@@ -3190,7 +3353,7 @@ body {
   }
 
   .feature-preview-chart-wrapper {
-    height: 360px;
+    height: 300px;
   }
 }
 

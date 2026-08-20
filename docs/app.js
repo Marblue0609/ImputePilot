@@ -669,6 +669,27 @@ async function uploadFiles(endpoint, files) {
 }
 
 // ========== Navigation ==========
+const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+const mobileMenuBackdrop = document.getElementById('mobile-menu-backdrop');
+
+function setMobileMenuOpen(isOpen) {
+  document.body.classList.toggle('mobile-menu-open', isOpen);
+  if (mobileMenuToggle) {
+    mobileMenuToggle.setAttribute('aria-expanded', String(isOpen));
+    mobileMenuToggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
+  }
+}
+
+mobileMenuToggle?.addEventListener('click', () => {
+  setMobileMenuOpen(!document.body.classList.contains('mobile-menu-open'));
+});
+
+mobileMenuBackdrop?.addEventListener('click', () => setMobileMenuOpen(false));
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') setMobileMenuOpen(false);
+});
+
 document.querySelectorAll('.menu-item').forEach(item => {
   item.addEventListener('click', function () {
     document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
@@ -679,6 +700,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
     document.getElementById(`page-${pageId}`).classList.add('active');
     updatePipelineClusterLayoutState(pageId === 'pipeline' && [2, 3, 4, 5].includes(AppState.pipelineStep));
     updateRecommendFeatureLayoutState(pageId === 'recommend' && AppState.recommendStep === 2);
+    setMobileMenuOpen(false);
 
     // Load page-specific data
     if (pageId === 'dashboard') {
