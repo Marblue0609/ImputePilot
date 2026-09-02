@@ -108,6 +108,7 @@ const AppState = {
   recommendResults: null,
   evaluationMetrics: null,  // New: Evaluation metrics results
   downstreamResults: {},  // New: Downstream evaluation results (cached by task)
+  recommendContentHash: null,
 
   // Baseline status
   baselineStatus: {
@@ -3848,6 +3849,8 @@ function resetRecommendFeatureExtractionState() {
   AppState.recommendSeriesList = [];
   AppState.selectedRecoveredSeriesIndex = 0;
   AppState.lastImputationResults = null;
+  AppState.downstreamResults = {};
+  AppState.recommendContentHash = null;
   destroyRecommendFeaturePreviewChart();
   refreshRecoveredSeriesSelector();
 
@@ -4685,7 +4688,7 @@ async function fetchDownstreamResults(task) {
 
   let results;
   if (API_CONFIG.useMock) {
-    results = MockData.downstreamResults[task];
+    results = await buildContentAwareMockDownstreamResults(task);
   } else {
     const response = await apiCall(API_CONFIG.endpoints.runDownstream, 'POST', {
       datasetId: AppState.recommendDatasetId,
@@ -4699,6 +4702,79 @@ async function fetchDownstreamResults(task) {
   }
   AppState.downstreamResults[task] = results;
   return results;
+}
+
+function createSeededRandom(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state += 0x6D2B79F5;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function hashBytesFallback(bytes) {
+  let hash = 2166136261;
+  for (let index = 0; index < bytes.length; index += 1) {
+    hash ^= bytes[index];
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+async function getRecommendContentHash() {
+  if (Number.isInteger(AppState.recommendContentHash)) {
+    return AppState.recommendContentHash;
+  }
+
+  const file = AppState.recommendFiles?.[0];
+  if (!file) return 0x9E3779B9;
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let hash = hashBytesFallback(bytes);
+  if (globalThis.crypto?.subtle) {
+    const digest = new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', bytes));
+    hash = ((digest[0] << 24) | (digest[1] << 16) | (digest[2] << 8) | digest[3]) >>> 0;
+  }
+
+  AppState.recommendContentHash = hash;
+  return hash;
+}
+
+async function buildContentAwareMockDownstreamResults(task) {
+  const fileHash = await getRecommendContentHash();
+  const taskSeed = task === 'forecasting' ? 0xF0A5CA57 : 0xC1A55EED;
+  const random = createSeededRandom(fileHash ^ taskSeed);
+  const round = (value, digits = 3) => Number(value.toFixed(digits));
+  const nEvaluated = 30 + Math.floor(random() * 121);
+
+  if (task === 'forecasting') {
+    const groundTruth = 0.16 + random() * 0.20;
+    const withImputePilot = groundTruth * (1.08 + random() * 0.10);
+    const withoutImputePilot = withImputePilot * (1.12 + random() * 0.22);
+    return {
+      groundTruth: { value: round(groundTruth), std: round(0.015 + random() * 0.035) },
+      withImputePilot: { value: round(withImputePilot), std: round(0.025 + random() * 0.040) },
+      withoutImputePilot: { value: round(withoutImputePilot), std: round(0.040 + random() * 0.060) },
+      improvement: round(((withoutImputePilot - withImputePilot) / withoutImputePilot) * 100, 1),
+      gapToOptimal: round(((withImputePilot - groundTruth) / groundTruth) * 100, 1),
+      n_evaluated: nEvaluated,
+    };
+  }
+
+  const groundTruth = 0.92 + random() * 0.06;
+  const withImputePilot = groundTruth - (0.025 + random() * 0.055);
+  const withoutImputePilot = Math.max(0.50, withImputePilot - (0.040 + random() * 0.110));
+  return {
+    groundTruth: { value: round(groundTruth), std: round(0.008 + random() * 0.018) },
+    withImputePilot: { value: round(withImputePilot), std: round(0.012 + random() * 0.025) },
+    withoutImputePilot: { value: round(withoutImputePilot), std: round(0.020 + random() * 0.040) },
+    improvement: round(((withImputePilot - withoutImputePilot) / withoutImputePilot) * 100, 1),
+    gapToOptimal: round(((groundTruth - withImputePilot) / groundTruth) * 100, 1),
+    n_evaluated: nEvaluated,
+  };
 }
 
 function renderDownstreamResults(task, results) {
