@@ -913,8 +913,7 @@ function renderSelectedRealworldDataset() {
     datasetSearchInput.value = state.datasetSearch || '';
   }
 
-  const allDatasets = getAvailableDatasets(rows)
-    .filter(datasetName => Boolean(getOnlineRecommendationRun(datasetName)));
+  const allDatasets = getAvailableDatasets(rows);
   const query = (state.datasetSearch || '').trim().toLowerCase();
   const filteredDatasets = query
     ? allDatasets.filter(name => name.toLowerCase().includes(query))
@@ -928,10 +927,7 @@ function renderSelectedRealworldDataset() {
   const onlineRecommendationRun = syncOnlineRecommendationRunTime();
 
   if (!state.selectedDataset) {
-    const message = allDatasets.length
-      ? 'No completed Online Model Recommendation dataset matches the current search.'
-      : 'Complete Online Model Recommendation to add a dataset for impact evaluation.';
-    showRealworldBenchmarkEmpty(message);
+    showRealworldBenchmarkEmpty('No dataset matches the current search. Try another keyword.');
     return;
   }
 
@@ -980,7 +976,9 @@ function renderSelectedRealworldDataset() {
   if (computeImpactButton) computeImpactButton.parentElement.style.display = 'block';
   if (summaryMeta) {
     const generatedAtText = API_CONFIG.useMock
-      ? `Online recommended at ${formatOnlineRecommendationRunTime(onlineRecommendationRun)}`
+      ? (onlineRecommendationRun
+        ? `Online recommended at ${formatOnlineRecommendationRunTime(onlineRecommendationRun)}`
+        : 'Online recommendation time unavailable')
       : (state.generatedAt ? `Online recommended at ${state.generatedAt}` : 'Online recommendation time unavailable');
     const actionText = impactComputed ? '' : ' Click Compute Impact to display the comparison charts.';
     summaryMeta.textContent = `${generatedAtText}. Showing dataset-level method comparison (${filteredDatasets.length}/${allDatasets.length} visible).${actionText}`;
@@ -1022,6 +1020,13 @@ function bindRealworldBenchmarkControls() {
   computeImpactButton.addEventListener('click', () => {
     const selectedDataset = AppState.dashboardBenchmark.selectedDataset;
     if (!selectedDataset) return;
+    if (!getOnlineRecommendationRun(selectedDataset)) {
+      const summaryMeta = document.getElementById('rw-summary-meta');
+      if (summaryMeta) {
+        summaryMeta.textContent = 'Complete Online Model Recommendation for this dataset before computing its impact.';
+      }
+      return;
+    }
     AppState.dashboardBenchmark.impactDataset = selectedDataset;
     renderSelectedRealworldDataset();
   });
