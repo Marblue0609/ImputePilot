@@ -806,8 +806,13 @@ function formatBenchmarkRunLabel(item) {
 }
 
 function normalizeDatasetRunKey(name) {
-  return String(name || '')
+  const baseName = String(name || '')
     .trim()
+    .replace(/\\/g, '/')
+    .split('/')
+    .filter(Boolean)
+    .pop() || '';
+  return baseName
     .replace(/\.(csv|tsv|txt|zip)$/i, '')
     .replace(/[_-]missing$/i, '')
     .toLowerCase();
