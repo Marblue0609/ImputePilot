@@ -809,6 +809,7 @@ function normalizeDatasetRunKey(name) {
   return String(name || '')
     .trim()
     .replace(/\.(csv|tsv|txt|zip)$/i, '')
+    .replace(/[_-]missing$/i, '')
     .toLowerCase();
 }
 
@@ -960,7 +961,7 @@ function renderSelectedRealworldDataset() {
   if (summaryCharts) summaryCharts.style.display = impactComputed ? 'grid' : 'none';
   if (computeImpactButton) computeImpactButton.parentElement.style.display = 'block';
   if (summaryMeta) {
-    const generatedAtText = state.generatedAt ? `Generated at ${state.generatedAt}` : 'Generated time unavailable';
+    const generatedAtText = state.generatedAt ? `Online recommended at ${state.generatedAt}` : 'Online recommendation time unavailable';
     const actionText = impactComputed ? '' : ' Click Compute Impact to display the comparison charts.';
     summaryMeta.textContent = `${generatedAtText}. Showing dataset-level method comparison (${filteredDatasets.length}/${allDatasets.length} visible).${actionText}`;
   }
