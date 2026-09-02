@@ -918,7 +918,7 @@ function renderSelectedRealworldDataset() {
   if (summaryEmpty) summaryEmpty.style.display = 'none';
   if (summaryCharts) summaryCharts.style.display = 'grid';
   if (summaryMeta) {
-    const generatedAtText = state.generatedAt ? `Generated at ${state.generatedAt}` : 'Generated time unavailable';
+    const generatedAtText = state.generatedAt ? `Online recommended at ${state.generatedAt}` : 'Online recommended time unavailable';
     summaryMeta.textContent = `${generatedAtText}. Showing dataset-level method comparison (${filteredDatasets.length}/${allDatasets.length} visible).`;
   }
 }
