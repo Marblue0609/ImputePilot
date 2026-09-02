@@ -4019,7 +4019,7 @@ if (btnRecommendRunFeatures) {
       let featurePayload;
       if (API_CONFIG.useMock) {
         await simulateDelay(1200);
-        featurePayload = MockData.featureResults;
+        featurePayload = await buildContentAwareMockFeatureResults();
       } else {
         featurePayload = await apiCall(API_CONFIG.endpoints.runRecommendFeatures, 'POST', {
           datasetId: AppState.recommendDatasetId,
@@ -4507,7 +4507,7 @@ if (btnGetImputation) {
       let results;
       if (API_CONFIG.useMock) {
         await simulateDelay(2000);
-        results = MockData.imputationResults;
+        results = await buildContentAwareMockImputationResults();
       } else {
         const response = await apiCall(API_CONFIG.endpoints.runImputation, 'POST', {
           datasetId: AppState.recommendDatasetId,
@@ -4702,6 +4702,56 @@ async function fetchDownstreamResults(task) {
   }
   AppState.downstreamResults[task] = results;
   return results;
+}
+
+async function buildContentAwareMockFeatureResults() {
+  const fileHash = await getRecommendContentHash();
+  const random = createSeededRandom(fileHash ^ 0xFEA7E123);
+  const fileName = AppState.recommendFiles?.[0]?.name || 'Uploaded dataset';
+  const featureCounts = {
+    catch22: 22,
+    tsfresh: 620 + Math.floor(random() * 281),
+    topological: 3 + Math.floor(random() * 10),
+  };
+
+  const featureImportance = MockData.featureResults.featureImportance.map((item) => {
+    const key = String(item.name).toLowerCase();
+    return { ...item, value: featureCounts[key] ?? item.value };
+  });
+  const featurePreview = Object.fromEntries(Object.entries(MockData.featureResults.featurePreview).map(([key, entry]) => {
+    const rows = entry.rows.map((row) => Object.fromEntries(Object.entries(row).map(([column, value]) => {
+      if (column === entry.idColumn || typeof value !== 'number') return [column, value];
+      return [column, Number((value * (0.86 + random() * 0.28)).toFixed(3))];
+    })));
+    return [key, {
+      ...entry,
+      dataset: fileName,
+      totalFeatures: featureCounts[key] ?? entry.totalFeatures,
+      rows,
+    }];
+  }));
+
+  return {
+    ...MockData.featureResults,
+    featureImportance,
+    featurePreview,
+  };
+}
+
+async function buildContentAwareMockImputationResults() {
+  const fileHash = await getRecommendContentHash();
+  const random = createSeededRandom(fileHash ^ 0x1A7E7E42);
+  const processingSeconds = 0.72 + random() * 2.58;
+  const comparison = MockData.imputationResults.comparison.map((row, index) => ({
+    ...row,
+    runtime: `${(processingSeconds + index * (0.55 + random() * 0.40)).toFixed(2)}s`,
+  }));
+
+  return {
+    ...MockData.imputationResults,
+    processingTime: `${processingSeconds.toFixed(2)}s`,
+    comparison,
+  };
 }
 
 function createSeededRandom(seed) {
