@@ -829,17 +829,26 @@ function recordOnlineRecommendationRun() {
   };
 }
 
+function getOnlineRecommendationRun(datasetName) {
+  return AppState.onlineRecommendationRuns[normalizeDatasetRunKey(datasetName)] || null;
+}
+
+function formatOnlineRecommendationRunTime(run) {
+  return run?.completedAt ? new Date(run.completedAt).toLocaleString() : '';
+}
+
 function syncOnlineRecommendationRunTime() {
   const { benchmarkSelect } = getRealworldControlElements();
-  if (!benchmarkSelect || !API_CONFIG.useMock) return;
+  if (!benchmarkSelect || !API_CONFIG.useMock) return null;
 
   const selectedDataset = AppState.dashboardBenchmark.selectedDataset;
-  const run = AppState.onlineRecommendationRuns[normalizeDatasetRunKey(selectedDataset)];
+  const run = getOnlineRecommendationRun(selectedDataset);
   const label = run
-    ? new Date(run.completedAt).toLocaleString()
+    ? formatOnlineRecommendationRunTime(run)
     : 'No Online Model Recommendation run yet';
   setSelectOptions(benchmarkSelect, [{ value: run?.completedAt || '', label }], run?.completedAt || '');
   benchmarkSelect.disabled = true;
+  return run;
 }
 
 function getAvailableDatasets(rows) {
@@ -904,7 +913,8 @@ function renderSelectedRealworldDataset() {
     datasetSearchInput.value = state.datasetSearch || '';
   }
 
-  const allDatasets = getAvailableDatasets(rows);
+  const allDatasets = getAvailableDatasets(rows)
+    .filter(datasetName => Boolean(getOnlineRecommendationRun(datasetName)));
   const query = (state.datasetSearch || '').trim().toLowerCase();
   const filteredDatasets = query
     ? allDatasets.filter(name => name.toLowerCase().includes(query))
@@ -915,10 +925,13 @@ function renderSelectedRealworldDataset() {
   if (datasetSelect) {
     state.selectedDataset = datasetSelect.value || '';
   }
-  syncOnlineRecommendationRunTime();
+  const onlineRecommendationRun = syncOnlineRecommendationRunTime();
 
   if (!state.selectedDataset) {
-    showRealworldBenchmarkEmpty('No dataset matches the current search. Try another keyword.');
+    const message = allDatasets.length
+      ? 'No completed Online Model Recommendation dataset matches the current search.'
+      : 'Complete Online Model Recommendation to add a dataset for impact evaluation.';
+    showRealworldBenchmarkEmpty(message);
     return;
   }
 
@@ -966,7 +979,9 @@ function renderSelectedRealworldDataset() {
   if (summaryCharts) summaryCharts.style.display = impactComputed ? 'grid' : 'none';
   if (computeImpactButton) computeImpactButton.parentElement.style.display = 'block';
   if (summaryMeta) {
-    const generatedAtText = state.generatedAt ? `Online recommended at ${state.generatedAt}` : 'Online recommendation time unavailable';
+    const generatedAtText = API_CONFIG.useMock
+      ? `Online recommended at ${formatOnlineRecommendationRunTime(onlineRecommendationRun)}`
+      : (state.generatedAt ? `Online recommended at ${state.generatedAt}` : 'Online recommendation time unavailable');
     const actionText = impactComputed ? '' : ' Click Compute Impact to display the comparison charts.';
     summaryMeta.textContent = `${generatedAtText}. Showing dataset-level method comparison (${filteredDatasets.length}/${allDatasets.length} visible).${actionText}`;
   }
