@@ -311,6 +311,10 @@ body {
   margin-bottom: 12px;
 }
 
+
+.benchmark-impact-action {
+  margin: 0 0 16px;
+}
 .benchmark-controls {
   display: grid;
   grid-template-columns: 1fr 1.2fr 1.4fr;

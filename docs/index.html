@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ImputePilot Time Series Imputation</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=20260820a">
+  <link rel="stylesheet" href="style.css?v=20260902a">
   <!-- Chart.js for time series visualization -->
   <script src="vendor/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
@@ -76,6 +76,9 @@
             </label>
           </div>
           <div class="summary-meta" id="rw-summary-meta"></div>
+          <div class="benchmark-impact-action" id="rw-compute-impact-action">
+            <button id="rw-compute-impact" class="btn btn-primary" type="button">Compute Impact</button>
+          </div>
           <div class="summary-charts">
             <div class="chart-card">
               <div class="chart-title" id="rw-forecasting-title">Forecasting RMSE by Method</div>
@@ -962,7 +965,7 @@
   </div>
 
   <script>window.IMPUTEPILOT_STATIC_DEMO = true;</script>
-  <script src="app.js?v=20260902c"></script>
+  <script src="app.js?v=20260902e"></script>
 </body>
 
 </html>

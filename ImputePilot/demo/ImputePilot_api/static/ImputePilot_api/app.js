@@ -109,6 +109,7 @@ const AppState = {
   evaluationMetrics: null,  // New: Evaluation metrics results
   downstreamResults: {},  // New: Downstream evaluation results (cached by task)
   recommendContentHash: null,
+  onlineRecommendationRuns: {},
 
   // Baseline status
   baselineStatus: {
@@ -126,6 +127,7 @@ const AppState = {
     rows: [],
     datasetSearch: '',
     selectedDataset: '',
+    impactDataset: '',
   },
 };
 
@@ -759,6 +761,7 @@ function getRealworldControlElements() {
     summaryMeta: document.getElementById('rw-summary-meta'),
     benchmarkSelect: document.getElementById('rw-benchmark-select'),
     datasetSearchInput: document.getElementById('rw-dataset-search'),
+    computeImpactButton: document.getElementById('rw-compute-impact'),
     datasetSelect: document.getElementById('rw-dataset-select'),
     forecastTitle: document.getElementById('rw-forecasting-title'),
     classificationTitle: document.getElementById('rw-classification-title'),
@@ -802,6 +805,37 @@ function formatBenchmarkRunLabel(item) {
   return item.file || 'Unknown run';
 }
 
+function normalizeDatasetRunKey(name) {
+  return String(name || '')
+    .trim()
+    .replace(/\.(csv|tsv|txt|zip)$/i, '')
+    .toLowerCase();
+}
+
+function recordOnlineRecommendationRun() {
+  const previewName = AppState.recommendUploadResult?.preview?.fileName;
+  const fileName = previewName || AppState.recommendFiles?.[0]?.name;
+  const key = normalizeDatasetRunKey(fileName);
+  if (!key) return;
+  AppState.onlineRecommendationRuns[key] = {
+    datasetName: String(fileName).replace(/\.(csv|tsv|txt|zip)$/i, ''),
+    completedAt: new Date().toISOString(),
+  };
+}
+
+function syncOnlineRecommendationRunTime() {
+  const { benchmarkSelect } = getRealworldControlElements();
+  if (!benchmarkSelect || !API_CONFIG.useMock) return;
+
+  const selectedDataset = AppState.dashboardBenchmark.selectedDataset;
+  const run = AppState.onlineRecommendationRuns[normalizeDatasetRunKey(selectedDataset)];
+  const label = run
+    ? new Date(run.completedAt).toLocaleString()
+    : 'No Online Model Recommendation run yet';
+  setSelectOptions(benchmarkSelect, [{ value: run?.completedAt || '', label }], run?.completedAt || '');
+  benchmarkSelect.disabled = true;
+}
+
 function getAvailableDatasets(rows) {
   const names = Array.from(new Set((rows || []).map(r => r?.dataset).filter(Boolean)));
   names.sort((a, b) => a.localeCompare(b));
@@ -827,12 +861,13 @@ function getMethodListFromBenchmark(benchmarkData) {
 }
 
 function showRealworldBenchmarkEmpty(message) {
-  const { summaryEmpty, summaryCharts, summaryMeta, forecastTitle, classificationTitle } = getRealworldControlElements();
+  const { summaryEmpty, summaryCharts, summaryMeta, computeImpactButton, forecastTitle, classificationTitle } = getRealworldControlElements();
   if (summaryEmpty) {
     summaryEmpty.style.display = 'flex';
     summaryEmpty.textContent = message;
   }
   if (summaryCharts) summaryCharts.style.display = 'none';
+  if (computeImpactButton) computeImpactButton.parentElement.style.display = 'none';
   if (summaryMeta) summaryMeta.textContent = '';
   if (forecastTitle) forecastTitle.textContent = 'Forecasting RMSE by Method';
   if (classificationTitle) classificationTitle.textContent = 'Classification Accuracy by Method';
@@ -845,6 +880,7 @@ function renderSelectedRealworldDataset() {
     summaryCharts,
     summaryMeta,
     datasetSearchInput,
+    computeImpactButton,
     datasetSelect,
     forecastTitle,
     classificationTitle,
@@ -873,6 +909,7 @@ function renderSelectedRealworldDataset() {
   if (datasetSelect) {
     state.selectedDataset = datasetSelect.value || '';
   }
+  syncOnlineRecommendationRunTime();
 
   if (!state.selectedDataset) {
     showRealworldBenchmarkEmpty('No dataset matches the current search. Try another keyword.');
@@ -896,6 +933,9 @@ function renderSelectedRealworldDataset() {
     classificationValues[method] = [getClassificationMetric(entryMap[method])];
   });
 
+  const impactComputed = state.impactDataset === state.selectedDataset;
+  if (summaryCharts) summaryCharts.style.display = impactComputed ? 'grid' : 'none';
+  if (impactComputed) {
   renderBenchmarkDatasetChart(
     'rw-forecasting-chart',
     `${state.selectedDataset} - Forecasting RMSE (lower is better)`,
@@ -912,21 +952,24 @@ function renderSelectedRealworldDataset() {
     classificationValues,
     'classification_acc',
   );
+  }
 
   if (forecastTitle) forecastTitle.textContent = `${state.selectedDataset} - Forecasting RMSE`;
   if (classificationTitle) classificationTitle.textContent = `${state.selectedDataset} - Classification Accuracy`;
   if (summaryEmpty) summaryEmpty.style.display = 'none';
-  if (summaryCharts) summaryCharts.style.display = 'grid';
+  if (summaryCharts) summaryCharts.style.display = impactComputed ? 'grid' : 'none';
+  if (computeImpactButton) computeImpactButton.parentElement.style.display = 'block';
   if (summaryMeta) {
     const generatedAtText = state.generatedAt ? `Generated at ${state.generatedAt}` : 'Generated time unavailable';
-    summaryMeta.textContent = `${generatedAtText}. Showing dataset-level method comparison (${filteredDatasets.length}/${allDatasets.length} visible).`;
+    const actionText = impactComputed ? '' : ' Click Compute Impact to display the comparison charts.';
+    summaryMeta.textContent = `${generatedAtText}. Showing dataset-level method comparison (${filteredDatasets.length}/${allDatasets.length} visible).${actionText}`;
   }
 }
 
 function bindRealworldBenchmarkControls() {
   if (rwBenchmarkControlsBound) return;
-  const { benchmarkSelect, datasetSearchInput, datasetSelect } = getRealworldControlElements();
-  if (!benchmarkSelect || !datasetSearchInput || !datasetSelect) return;
+  const { benchmarkSelect, datasetSearchInput, datasetSelect, computeImpactButton } = getRealworldControlElements();
+  if (!benchmarkSelect || !datasetSearchInput || !datasetSelect || !computeImpactButton) return;
 
   benchmarkSelect.addEventListener('change', async () => {
     const selectedFile = benchmarkSelect.value || '';
@@ -954,8 +997,16 @@ function bindRealworldBenchmarkControls() {
     renderSelectedRealworldDataset();
   });
 
+
+  computeImpactButton.addEventListener('click', () => {
+    const selectedDataset = AppState.dashboardBenchmark.selectedDataset;
+    if (!selectedDataset) return;
+    AppState.dashboardBenchmark.impactDataset = selectedDataset;
+    renderSelectedRealworldDataset();
+  });
   rwBenchmarkControlsBound = true;
 }
+
 
 function renderRealworldBenchmarks(benchmarkData, options = {}) {
   const { benchmarkSelect } = getRealworldControlElements();
@@ -990,7 +1041,7 @@ function renderRealworldBenchmarks(benchmarkData, options = {}) {
     state.selectedDataset = prevDataset;
   }
 
-  if (benchmarkSelect) {
+  if (benchmarkSelect && !API_CONFIG.useMock) {
     const runOptions = state.availableBenchmarks.map(item => ({
       value: item.file || '',
       label: formatBenchmarkRunLabel(item),
@@ -4126,6 +4177,7 @@ async function executeRecommendation() {
   AppState.recommendResults = results;
   renderRecommendResults(results);
   recommendationCompleted = true;
+  recordOnlineRecommendationRun();
 
   if (AppState.groundTruthAvailable) showEvaluationMetricsPanel();
 
