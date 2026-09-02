@@ -4708,16 +4708,7 @@ async function buildContentAwareMockFeatureResults() {
   const fileHash = await getRecommendContentHash();
   const random = createSeededRandom(fileHash ^ 0xFEA7E123);
   const fileName = AppState.recommendFiles?.[0]?.name || 'Uploaded dataset';
-  const featureCounts = {
-    catch22: 22,
-    tsfresh: 620 + Math.floor(random() * 281),
-    topological: 3 + Math.floor(random() * 10),
-  };
-
-  const featureImportance = MockData.featureResults.featureImportance.map((item) => {
-    const key = String(item.name).toLowerCase();
-    return { ...item, value: featureCounts[key] ?? item.value };
-  });
+  const featureImportance = MockData.featureResults.featureImportance.map((item) => ({ ...item }));
   const featurePreview = Object.fromEntries(Object.entries(MockData.featureResults.featurePreview).map(([key, entry]) => {
     const rows = entry.rows.map((row) => Object.fromEntries(Object.entries(row).map(([column, value]) => {
       if (column === entry.idColumn || typeof value !== 'number') return [column, value];
@@ -4726,7 +4717,7 @@ async function buildContentAwareMockFeatureResults() {
     return [key, {
       ...entry,
       dataset: fileName,
-      totalFeatures: featureCounts[key] ?? entry.totalFeatures,
+      totalFeatures: entry.totalFeatures,
       rows,
     }];
   }));
